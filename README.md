@@ -3,10 +3,10 @@
 
 <div align="center">
 
-![anidesk-transparent](https://github.com/user-attachments/assets/497e25a6-751c-4f98-bd60-faec3ab1e69d)
+![ReXart-transparent](https://github.com/user-attachments/assets/497e25a6-751c-4f98-bd60-faec3ab1e69d)
 
-# AniDesk
-**AniDesk** — это неофициальный десктоп клиент мобильного приложения **Anixart** с открытым исходным кодом, предоставляющий удобный способ просматривать аниме и получать информацию о релизах.
+# ReXart
+**ReXart** — это неофициальный десктоп клиент мобильного приложения **Anixart** с открытым исходным кодом, предоставляющий удобный способ просматривать аниме и получать информацию о релизах.
 
 </div>
 
@@ -18,11 +18,11 @@
 
 ## 📦 Установка
 
-> ⚠️ Актуальные сборки доступны на странице [релизов](https://github.com/theDesConnet/AniDesk/releases)
+> ⚠️ Актуальные сборки доступны на странице [релизов](https://github.com/theDesConnet/ReXart/releases)
 
 Архив
   - Скачайте архив с последней версией для вашей ОС.
-  - Распакуйте и запустите файл `AniDesk`.
+  - Распакуйте и запустите файл `ReXart`.
 
 Установочный файл
  - Скачайте установочный файл последней версии для вашей ОС
@@ -31,15 +31,15 @@
 ## 🛠️ Сборка вручную
 
 ```bash
-git clone https://github.com/theDesConnet/AniDesk.git
-cd AniDesk
+git clone https://github.com/theDesConnet/ReXart.git
+cd ReXart
 npm install
 npm run buildAndMake
 ```
 
 ## 💬 Обратная связь
 
-Нашли баг или хотите предложить улучшение? Открывайте [issue](https://github.com/theDesConnet/AniDesk/issues "issue") или создавайте pull request.
+Нашли баг или хотите предложить улучшение? Открывайте [issue](https://github.com/theDesConnet/ReXart/issues "issue") или создавайте pull request.
 
 ## 📜 Лицензия
 
