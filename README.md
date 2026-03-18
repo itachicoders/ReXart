@@ -14,11 +14,11 @@
 
 - 🔐 Использование вашего аккаунта Anixart  
 - ▶️ Встроенный видеоплеер  
-- 🎞️ Улучшение качества видео с помощью Anime4K  
+- 🎞️ Улучшение качества видео с помощью Anime4K  `
 
 ## 📦 Установка
 
-> ⚠️ Актуальные сборки доступны на странице [релизов](https://github.com/theDesConnet/ReXart/releases)
+> ⚠️ Актуальные сборки доступны на странице [релизов](https://github.com/itachicoders/ReXart/releases)
 
 Архив
   - Скачайте архив с последней версией для вашей ОС.
@@ -31,7 +31,7 @@
 ## 🛠️ Сборка вручную
 
 ```bash
-git clone https://github.com/theDesConnet/ReXart.git
+git clone https://github.com/itachicoders/ReXart.git
 cd ReXart
 npm install
 npm run buildAndMake
@@ -39,7 +39,7 @@ npm run buildAndMake
 
 ## 💬 Обратная связь
 
-Нашли баг или хотите предложить улучшение? Открывайте [issue](https://github.com/theDesConnet/ReXart/issues "issue") или создавайте pull request.
+Нашли баг или хотите предложить улучшение? Открывайте [issue](https://github.com/itachicoders/ReXart/issues "issue") или создавайте pull request.
 
 ## 📜 Лицензия
 
