@@ -55,6 +55,7 @@
     "anixartjs": "^0.1.6",
     "electron-serve": "^3.0.0",
     "electron-squirrel-startup": "^1.0.1",
-    "openurl": "^1.1.1"
+    "openurl": "^1.1.1",
+    "cropperjs": "^1.6.2"
   }
 }
