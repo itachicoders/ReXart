@@ -8,45 +8,124 @@
 
     const dispatch = createEventDispatcher();
 
-    let cropper;
-    let imageElement;
+    let cropper = null;
+    let imageElement = null;
+    let stageElement = null;
     let isSaving = false;
     let initializedImage = null;
+    let currentImageDataUrl = null;
+    let imageLoaded = false;
     let saveError = "";
 
-    async function initCropper() {
-        if (!args?.imageDataUrl || !imageElement || initializedImage === args.imageDataUrl) {
+    function destroyCropper() {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+    }
+
+    function fitCropBox() {
+        if (!cropper) {
             return;
         }
 
-        initializedImage = args.imageDataUrl;
+        const containerData = cropper.getContainerData();
+        const aspectRatio = args?.aspectRatio ?? 1;
+        const padding = 24;
+        const maxWidth = Math.max(containerData.width - padding * 2, 120);
+        const maxHeight = Math.max(containerData.height - padding * 2, 120);
+
+        let cropWidth = maxWidth;
+        let cropHeight = cropWidth / aspectRatio;
+
+        if (cropHeight > maxHeight) {
+            cropHeight = maxHeight;
+            cropWidth = cropHeight * aspectRatio;
+        }
+
+        cropper.setCropBoxData({
+            width: cropWidth,
+            height: cropHeight,
+            left: (containerData.width - cropWidth) / 2,
+            top: (containerData.height - cropHeight) / 2,
+        });
+    }
+
+    async function initCropper() {
+        const imageDataUrl = args?.imageDataUrl;
+
+        if (!imageDataUrl || !imageElement || !imageLoaded || initializedImage === imageDataUrl) {
+            return;
+        }
+
         await tick();
 
-        if (cropper) {
-            cropper.destroy();
+        if (!imageElement?.isConnected) {
+            return;
         }
+
+        destroyCropper();
 
         cropper = new Cropper(imageElement, {
             aspectRatio: args.aspectRatio ?? 1,
-            viewMode: 1,
-            autoCropArea: 1,
+            viewMode: 2,
+            autoCropArea: 0.9,
             dragMode: "move",
             background: false,
             responsive: true,
             guides: true,
+            restore: false,
+            center: true,
+            checkOrientation: false,
+            toggleDragModeOnDblclick: false,
+            ready() {
+                requestAnimationFrame(() => {
+                    fitCropBox();
+                    cropper?.center?.();
+                });
+            },
         });
 
+        initializedImage = imageDataUrl;
         saveError = "";
     }
 
-    $: if (args?.imageDataUrl) {
+    function handleImageLoad() {
+        imageLoaded = true;
+        initCropper();
+    }
+
+    function handleImageError() {
+        imageLoaded = false;
+        destroyCropper();
+        saveError = "Не удалось загрузить изображение для редактирования.";
+    }
+
+    function handleResize() {
+        if (!cropper || !stageElement) {
+            return;
+        }
+
+        cropper.resize();
+        requestAnimationFrame(() => {
+            fitCropBox();
+        });
+    }
+
+    $: if (args?.imageDataUrl !== currentImageDataUrl) {
+        currentImageDataUrl = args?.imageDataUrl ?? null;
+        initializedImage = null;
+        imageLoaded = false;
+        saveError = "";
+        destroyCropper();
+    }
+
+    $: if (args?.imageDataUrl && imageElement && imageLoaded) {
         initCropper();
     }
 
     onDestroy(() => {
-        if (cropper) {
-            cropper.destroy();
-        }
+        destroyCropper();
     });
 
     function closeModal() {
@@ -67,7 +146,16 @@
     }
 
     async function saveCrop() {
-        if (!cropper || isSaving) return;
+        if (isSaving) {
+            return;
+        }
+
+        if (!cropper) {
+            saveError = imageLoaded
+                ? "Редактор изображения ещё не готов. Попробуйте нажать сохранить ещё раз."
+                : "Изображение ещё загружается. Дождитесь его отображения и попробуйте снова.";
+            return;
+        }
 
         saveError = "";
         isSaving = true;
@@ -107,13 +195,24 @@
     }
 </script>
 
+<svelte:window on:resize={handleResize} />
+
 <div class="modal-title">{args?.title ?? "Обрезать изображение"}</div>
 <div class="modal-content crop-modal-content">
-    {#if args?.imageDataUrl}
-        <img bind:this={imageElement} src={args.imageDataUrl} alt="crop-target" class="crop-image" />
-    {:else}
-        <div class="crop-empty">Изображение не выбрано</div>
-    {/if}
+    <div class="crop-stage" bind:this={stageElement}>
+        {#if args?.imageDataUrl}
+            <img
+                bind:this={imageElement}
+                src={args.imageDataUrl}
+                alt="crop-target"
+                class="crop-image"
+                on:load={handleImageLoad}
+                on:error={handleImageError}
+            />
+        {:else}
+            <div class="crop-empty">Изображение не выбрано</div>
+        {/if}
+    </div>
 
     <div class="crop-hint">
         Перемещайте и масштабируйте изображение, затем сохраните результат.
@@ -137,12 +236,34 @@
     .crop-modal-content {
         gap: 18px;
         height: calc(100% - 80px);
+        overflow: hidden;
+    }
+
+    .crop-stage {
+        flex: 1 1 auto;
+        min-height: 360px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border-radius: 16px;
+        background-color: rgba(255, 255, 255, 0.02);
     }
 
     .crop-image {
+        display: block;
         max-width: 100%;
-        min-height: 420px;
-        object-fit: contain;
+        max-height: 100%;
+    }
+
+    .crop-stage :global(.cropper-container) {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    .crop-stage :global(.cropper-bg) {
+        background-image: none;
+        background-color: rgba(255, 255, 255, 0.02);
     }
 
     .crop-empty,
@@ -160,6 +281,7 @@
     }
 
     .crop-actions {
+        flex-shrink: 0;
         margin-top: auto;
         gap: 12px;
         justify-content: flex-end;

@@ -27,7 +27,6 @@
     let showSettings = false;
     let mousePosPercent = 0;
     let dropdownElements, dropdownType;
-    let relatedMaxPage = 0;
     export let volumePercent = 50;
 
     function onClickGui() {
@@ -131,25 +130,6 @@
                     "episodes",
                 );
                 break;
-
-            case "related":
-                const dubbers = await anixApi.release.getDubbers(
-                    argsElement.value.id,
-                );
-                argsElement.nextPage(
-                    argsElement.value,
-                    dubbers.types.map((z) => ({
-                        title: z.name,
-                        subtitle: `${z.episodes_count} Эпизодов`,
-                        image: {
-                            type: "default",
-                            src: z.icon ?? "./assets/icons/defaultDubber.svg",
-                        },
-                        value: z,
-                    })),
-                    "dubbers",
-                );
-                break;
         }
     }
 
@@ -181,25 +161,6 @@
         dropdownShowed = true;
     }
 
-    async function showRelatedReleasesDropdown() {
-        const related = await anixApi.release.getRelatedReleases(
-            args.release.related.id,
-            0,
-        );
-        relatedMaxPage = related.total_pages;
-        dropdownElements = related.content.map((b) => ({
-            title: b.title_ru,
-            subtitle: b.title_original,
-            description: b.description,
-            image: {
-                type: "poster",
-                src: b.image,
-            },
-            value: b,
-        }));
-        dropdownType = "related";
-        dropdownShowed = true;
-    }
 
     function playerMouseMove(e) {
         if (isScrubbing) {
@@ -436,17 +397,6 @@
                         alt="dubbers"
                     />
                     <span>Озвучка</span>
-                </button>
-                <button
-                    class="player-bottom-button"
-                    class:bottom-disabled={args.release.related_count == 0}
-                    on:click={() => {
-                        if (args.release.related_count > 0)
-                            showRelatedReleasesDropdown();
-                    }}
-                >
-                    <img src="./assets/icons/linkedRelease.svg" alt="linked" />
-                    <span>Связанные релизы</span>
                 </button>
             </div>
             <div class="right-content flex-row">

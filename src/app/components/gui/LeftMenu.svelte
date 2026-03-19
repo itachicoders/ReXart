@@ -13,7 +13,6 @@
     import Discover from "../../pages/Discover.svelte";
     import Search from "../../pages/Search.svelte";
     import History from "../../pages/History.svelte";
-    import Related from "../../pages/Related.svelte";
     import ReleaseCollections from "../../pages/ReleaseCollections.svelte";
     import CreateCollection from "../../pages/CreateCollection.svelte";
     import DiscoverFilter from "../../pages/DiscoverFilter.svelte";
@@ -50,7 +49,7 @@
         Player,
         Collection,
         History,
-        Related,
+        NotAvaliable,
         ReleaseCollections,
         CreateCollection,
         DiscoverFilter,

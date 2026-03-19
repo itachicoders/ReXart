@@ -2,7 +2,7 @@
     import { createEventDispatcher } from "svelte";
     import Preloader from "../gui/Preloader.svelte";
     import { addReleaseToCollection, fetchUserCollectionsPage } from "../../api/collections.js";
-    import { getCurrentUserId } from "../../api/request.js";
+    import { getCurrentUserId, isAuthorized } from "../../api/request.js";
 
     const dispatch = createEventDispatcher();
 
@@ -18,11 +18,36 @@
     let errorMessage = "";
     let loadingCollectionId = null;
 
-    const currentUserId = getCurrentUserId();
+    let currentUserId = getCurrentUserId();
+    let authorized = isAuthorized();
 
-    let firstData = currentUserId
-        ? fetchUserCollectionsPage(currentUserId, 0).catch(() => ({ content: [] }))
-        : Promise.resolve({ content: [] });
+    function resetCollectionsState() {
+        page = 0;
+        allData = [];
+        updateInfo = false;
+        reachedEnd = false;
+        errorMessage = "";
+        loadingCollectionId = null;
+    }
+
+    function refreshAuthState() {
+        currentUserId = getCurrentUserId();
+        authorized = isAuthorized();
+    }
+
+    function createFirstDataPromise() {
+        refreshAuthState();
+        return authorized && currentUserId
+            ? fetchUserCollectionsPage(currentUserId, 0).catch(() => ({ content: [] }))
+            : Promise.resolve({ content: [] });
+    }
+
+    let firstData = createFirstDataPromise();
+
+    $: if (showed) {
+        resetCollectionsState();
+        firstData = createFirstDataPromise();
+    }
 
     async function getCollectionsPage() {
         const data = await fetchUserCollectionsPage(currentUserId, page).catch(() => ({ content: [] }));
@@ -39,6 +64,7 @@
 
     async function scrollEvent(e) {
         if (
+            !authorized ||
             !currentUserId ||
             updateInfo ||
             reachedEnd ||
@@ -90,7 +116,7 @@
             <div class="modal-error">{errorMessage}</div>
         {/if}
 
-        {#if !currentUserId}
+        {#if !authorized || !currentUserId}
             <div class="empty-state flex-column">
                 <span class="empty-state-emoji">🔒</span>
                 <span>Для управления коллекциями требуется авторизация.</span>
