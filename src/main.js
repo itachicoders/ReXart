@@ -19,7 +19,6 @@ const rpcClientId = '1372649290438148137';
 const SettingsPath = path.join(app.getPath("userData"), "settings.json");
 const DefaultSettings = {
   AutoUpdate: true,
-  EnableAnalytics: true,
   EnableRPC: false,
   EnableDevTools: false
 };
@@ -88,11 +87,6 @@ if (!isFirstInstance) {
 }
 
 if (SettingsFirst.EnableRPC) discordRpcClient.login().catch(console.error);
-
-if (SettingsFirst.EnableAnalytics) {
-  initialize("A-EU-5850138901");
-  trackEvent("app_started");
-}
 
 function isDev() {
   return !app.isPackaged;
