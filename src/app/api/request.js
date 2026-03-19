@@ -39,7 +39,11 @@ export function getCurrentToken() {
 }
 
 export function getCurrentUserId() {
-    return getStoredUserToken()?.id || null;
+    return window?.profileInfo?.id || window?.profileInfo?.profile?.id || getStoredUserToken()?.id || null;
+}
+
+export function isAuthorized() {
+    return Boolean(getCurrentToken());
 }
 
 export function buildAuthHeaders(token = getCurrentToken()) {
@@ -150,11 +154,11 @@ export function resolveImageBlob(image) {
         return null;
     }
 
-    if (typeof Blob !== "undefined" && image instanceof Blob) {
+    if (typeof File !== "undefined" && image instanceof File) {
         return image;
     }
 
-    if (typeof File !== "undefined" && image instanceof File) {
+    if (typeof Blob !== "undefined" && image instanceof Blob) {
         return image;
     }
 
@@ -169,6 +173,39 @@ export function resolveImageBlob(image) {
     return null;
 }
 
+function createUploadFormData(blob, filename, fieldName, includeNameField = false, extraFields = {}) {
+    const formData = new FormData();
+    formData.append(fieldName, blob, filename);
+
+    if (includeNameField) {
+        formData.append("name", fieldName);
+    }
+
+    Object.entries(extraFields).forEach(([key, value]) => {
+        if (value === null || value === undefined || value === "") return;
+        formData.append(key, value);
+    });
+
+    return formData;
+}
+
+function uniqueUploadVariants(variants = []) {
+    const seen = new Set();
+
+    return variants.filter((variant) => {
+        const key = JSON.stringify({
+            fieldName: variant.fieldName ?? "image",
+            includeNameField: Boolean(variant.includeNameField),
+            method: variant.method ?? "POST",
+            extraFields: variant.extraFields ?? {},
+        });
+
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    });
+}
+
 export async function uploadImage(path, image, {
     query = {},
     fieldName = "image",
@@ -176,6 +213,9 @@ export async function uploadImage(path, image, {
     method = "POST",
     apiVersion = null,
     headers = {},
+    includeNameField = false,
+    extraFields = {},
+    variants = [],
 } = {}) {
     const blob = resolveImageBlob(image);
 
@@ -183,16 +223,37 @@ export async function uploadImage(path, image, {
         throw new Error("Unable to convert image payload to Blob");
     }
 
-    const finalFilename = image?.filename ?? filename;
-    const formData = new FormData();
-    formData.append(fieldName, blob, finalFilename);
-    formData.append("name", fieldName);
+    const finalFilename = image?.name || image?.filename || filename;
+    const uploadVariants = uniqueUploadVariants([
+        { fieldName, includeNameField, method, extraFields },
+        ...variants,
+    ]);
 
-    return request(path, {
-        method,
-        query,
-        body: formData,
-        apiVersion,
-        headers,
-    });
+    let lastError = null;
+
+    for (const variant of uploadVariants) {
+        try {
+            return await request(path, {
+                method: variant.method ?? method,
+                query,
+                body: createUploadFormData(
+                    blob,
+                    finalFilename,
+                    variant.fieldName ?? fieldName,
+                    Boolean(variant.includeNameField),
+                    variant.extraFields ?? extraFields,
+                ),
+                apiVersion,
+                headers,
+            });
+        } catch (error) {
+            lastError = error;
+        }
+    }
+
+    if (lastError) {
+        throw lastError;
+    }
+
+    throw new Error("Image upload failed");
 }

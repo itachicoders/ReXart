@@ -44,6 +44,14 @@ export async function uploadProfileAvatar(image) {
             token,
         },
         headers: buildAuthHeaders(token),
-        filename: image?.filename ?? "avatar.jpg",
+        filename: image?.name || image?.filename || "avatar.jpg",
+        variants: [
+            { fieldName: "image", includeNameField: false },
+            { fieldName: "image", includeNameField: true },
+            { fieldName: "file", includeNameField: false },
+            { fieldName: "file", includeNameField: true },
+            { fieldName: "avatar", includeNameField: false },
+            { fieldName: "avatar", includeNameField: true },
+        ],
     });
 }

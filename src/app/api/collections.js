@@ -3,7 +3,7 @@ import { buildAuthHeaders, getCurrentToken, getCurrentUserId, isAuthorized, requ
 export async function fetchUserCollectionsPage(profileId = getCurrentUserId(), page = 0) {
     const token = getCurrentToken();
 
-    if (!token || !profileId) {
+    if (!profileId) {
         return { content: [], total_page_count: 0, current_page: 0 };
     }
 
@@ -11,46 +11,47 @@ export async function fetchUserCollectionsPage(profileId = getCurrentUserId(), p
         query: {
             token,
         },
-        headers: buildAuthHeaders(token),
+        headers: token ? buildAuthHeaders(token) : {},
+    });
+}
+
+export async function fetchReleaseCollectionsPage(releaseId, page = 0) {
+    const token = getCurrentToken();
+
+    return request(`/collection/all/release/${releaseId}/${page}`, {
+        query: {
+            token,
+        },
+        headers: token ? buildAuthHeaders(token) : {},
     });
 }
 
 export async function fetchCollectionInfo(collectionId) {
-    return request(`/collection/${collectionId}`);
+    const token = getCurrentToken();
+
+    return request(`/collection/${collectionId}`, {
+        query: {
+            token,
+        },
+        headers: token ? buildAuthHeaders(token) : {},
+    });
 }
 
 export async function fetchCollectionReleasesPage(collectionId, page = 0) {
-    return request(`/collection/content/${collectionId}/${page}`);
-}
-
-export async function createCollection({ title, description = "", is_private = false, releases = [] }) {
     const token = getCurrentToken();
 
-    if (!token) {
-        throw new Error("Authentication required");
-    }
-
-    const body = new URLSearchParams({
-        title,
-        description,
-        private: is_private ? "true" : "false",
-    });
-
-    releases.forEach((releaseId) => {
-        body.append("release_id[]", String(releaseId));
-    });
-
-    return request(`/collectionMy/add`, {
-        method: "POST",
-        query: { token },
-        body,
+    return request(`/collection/${collectionId}/releases/${page}`, {
+        query: {
+            token,
+        },
+        headers: token ? buildAuthHeaders(token) : {},
     });
 }
 
 export async function addReleaseToCollection(collectionId, releaseId) {
     const token = getCurrentToken();
 
-    if (!token) {
+    if (!token || !isAuthorized()) {
         throw new Error("Authentication required");
     }
 
@@ -63,54 +64,70 @@ export async function addReleaseToCollection(collectionId, releaseId) {
     });
 }
 
-export async function removeReleaseFromCollection(collectionId, releaseId) {
+export async function createCollection({ title, description, is_private = false, releases = [] }) {
     const token = getCurrentToken();
 
-    if (!token) {
+    if (!token || !isAuthorized()) {
         throw new Error("Authentication required");
     }
 
-    return request(`/collectionMy/release/remove/${collectionId}`, {
+    return request(`/collectionMy/create`, {
+        method: "POST",
         query: {
-            release_id: releaseId,
             token,
         },
+        headers: {
+            ...buildAuthHeaders(token),
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            title,
+            description,
+            is_private,
+            private: is_private,
+            releases,
+        }),
     });
 }
 
-export async function editCollection(collectionId, { title, description = "", is_private = false, releases = [] }) {
+export async function editCollection(collectionId, { title, description, is_private = false, releases = [] }) {
     const token = getCurrentToken();
 
-    if (!token) {
+    if (!token || !isAuthorized()) {
         throw new Error("Authentication required");
     }
 
-    const body = new URLSearchParams({
-        title,
-        description,
-        private: is_private ? "true" : "false",
-    });
-
-    releases.forEach((releaseId) => {
-        body.append("release_id[]", String(releaseId));
-    });
-
     return request(`/collectionMy/edit/${collectionId}`, {
         method: "POST",
-        query: { token },
-        body,
+        query: {
+            token,
+        },
+        headers: {
+            ...buildAuthHeaders(token),
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            title,
+            description,
+            is_private,
+            private: is_private,
+            releases,
+        }),
     });
 }
 
 export async function deleteCollection(collectionId) {
     const token = getCurrentToken();
 
-    if (!token) {
+    if (!token || !isAuthorized()) {
         throw new Error("Authentication required");
     }
 
     return request(`/collectionMy/remove/${collectionId}`, {
-        query: { token },
+        query: {
+            token,
+        },
+        headers: buildAuthHeaders(token),
     });
 }
 
