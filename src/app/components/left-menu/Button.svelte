@@ -11,7 +11,7 @@
     let modalShowed = false;
 </script>
 
-<button class="left-menu-button" onclick={() => type == "viewport" ? updateViewportComponent(viewportComponentIndex, argsComponent) : modalShowed = !modalShowed} class:selected={selected}>
+<button class="left-menu-button" on:click={() => type == "viewport" ? updateViewportComponent(viewportComponentIndex, argsComponent) : modalShowed = !modalShowed} class:selected={selected}>
     <Icon src={icon} varColor="--main-text-color" size={{width: 20, height: 20}}/>
 </button>
 

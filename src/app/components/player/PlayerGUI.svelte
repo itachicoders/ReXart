@@ -267,9 +267,9 @@
     class="player-gui"
     class:hide-gui={isHidden && !isPaused}
     style="--back-transparent: {transparentPercent / 100}"
-    onmousemove={playerMouseMove}
-    onmouseup={playerMouseUp}
-    onclick={onClickGui}
+    on:mousemove={playerMouseMove}
+    on:mouseup={playerMouseUp}
+    on:click={onClickGui}
 >
     <div class="gui-top-bar">
         <div class="gui-title flex-column">
@@ -282,7 +282,7 @@
     <div class="gui-middle-bar">
         <button
             class="gui-play-button"
-            onclick={(e) => {
+            on:click={(e) => {
                 video.paused ? video.play() : video.pause();
                 e.target.blur();
             }}
@@ -339,7 +339,7 @@
                         step="0.01"
                         class="volume-input"
                         style="--volume-position: {volumePercent}%"
-                        oninput={function () {
+                        on:input={function () {
                             volumePercent =
                                 ((this.value - this.min) /
                                     (this.max - this.min)) *
@@ -349,7 +349,7 @@
                 </div>
                 <button
                     class="gui-bottom-button"
-                    onclick={(e) => {
+                    on:click={(e) => {
                         e.stopPropagation();
                         showSettings = !showSettings;
                     }}
@@ -361,7 +361,7 @@
                         height="28px"
                     />
                 </button>
-                <button class="gui-bottom-button" onclick={() => {}}>
+                <button class="gui-bottom-button" on:click={() => {}}>
                     <img
                         src="./assets/icons/pipButton.svg"
                         alt="PiP"
@@ -371,7 +371,7 @@
                 </button>
                 <button
                     class="gui-bottom-button"
-                    onclick={() => {
+                    on:click={() => {
                         isFullscreen
                             ? elecWindow.exitFullscreen()
                             : elecWindow.enterFullscreen();
@@ -391,15 +391,15 @@
         <div class="middle-content container flex-row">
             <div
                 class="gui-timeline"
-                onmouseenter={() => {
+                on:mouseenter={() => {
                     showTimelineMouse = true;
                 }}
-                onmouseleave={() => {
+                on:mouseleave={() => {
                     showTimelineMouse = false;
                 }}
-                onmousemove={timelineMouseMove}
-                onmousedown={timelineMouseDown}
-                onmouseup={timelineMouseUp}
+                on:mousemove={timelineMouseMove}
+                on:mousedown={timelineMouseDown}
+                on:mouseup={timelineMouseUp}
             >
                 <div
                     class="timeline"
@@ -421,14 +421,14 @@
             <div class="left-content flex-row">
                 <button
                     class="player-bottom-button"
-                    onclick={showEpisodesDropdown}
+                    on:click={showEpisodesDropdown}
                 >
                     <img src="./assets/icons/episodeIcon.svg" alt="episode" />
                     <span>Серии</span>
                 </button>
                 <button
                     class="player-bottom-button"
-                    onclick={showDubbersDropdown}
+                    on:click={showDubbersDropdown}
                 >
                     <img
                         src="./assets/icons/dubbersIcon.svg"
@@ -440,7 +440,7 @@
                 <button
                     class="player-bottom-button"
                     class:bottom-disabled={args.release.related_count == 0}
-                    onclick={() => {
+                    on:click={() => {
                         if (args.release.related_count > 0)
                             showRelatedReleasesDropdown();
                     }}
@@ -452,7 +452,7 @@
             <div class="right-content flex-row">
                 <button
                     class="player-bottom-button"
-                    onclick={() => {
+                    on:click={() => {
                         video.currentTime = video.currentTime + 85;
                         progressPercent =
                             (video.currentTime / video.duration) * 100;
@@ -468,7 +468,7 @@
                     class="player-bottom-button"
                     class:bottom-disabled={cEpisode.position ==
                         args.episodes.length}
-                    onclick={async () => {
+                    on:click={async () => {
                         let e = args.episodes[args.episodes.findIndex(
                             (x) => x.position == cEpisode.position,
                         ) + 1];

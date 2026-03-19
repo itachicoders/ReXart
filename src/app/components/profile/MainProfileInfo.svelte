@@ -7,6 +7,7 @@
     import { Lottie } from "lottie-svelte";
     import BaseAltButton from "../buttons/BaseAltButton.svelte";
     import ProfileAvatar from "./ProfileAvatar.svelte";
+    import { toggleProfileBlock } from "../../api/profile.js";
 
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
@@ -18,6 +19,23 @@
             if (profile.friend_status == 2) dispatch("updateProfile");
         } else {
             profile.friend_status = (await anixApi.profile.removeFriendRequest(profile.id)).friend_status;
+        }
+    }
+
+    async function updateBlockState() {
+        if (!anixApi.client.token) {
+            updateViewportComponent(10);
+            return;
+        }
+
+        const nextValue = !profile.is_blocked;
+        profile.is_blocked = nextValue;
+
+        try {
+            await toggleProfileBlock(profile.id, nextValue);
+            dispatch("updateProfile");
+        } catch {
+            profile.is_blocked = !nextValue;
         }
     }
 </script>
@@ -37,14 +55,17 @@
         {#if !isMyProfile}
             <div class="profile-info-buttons flex-column">
                 <BaseAltButton
-                    btnType={profile.friend_status == null || profile.friend_status == 1
-                        ? "primary"
-                        : "secondary"}
-                    text={profile.friend_status == null || profile.friend_status == 1
-                        ? "Добавить в друзья"
-                        : "Удалить из друзей"}
+                    btnType={profile.friend_status == null || profile.friend_status == 1 ? "primary" : "secondary"}
+                    text={profile.friend_status == null || profile.friend_status == 1 ? "Добавить в друзья" : "Удалить из друзей"}
                     onClickCallback={() => sendFriendRequest(profile)}
                 />
+                {#if anixApi.client.token}
+                    <BaseAltButton
+                        btnType="secondary"
+                        text={profile.is_blocked ? "Разблокировать" : "Заблокировать"}
+                        onClickCallback={updateBlockState}
+                    />
+                {/if}
             </div>
         {/if}
     </div>
@@ -62,27 +83,17 @@
                         />
                     </div>
                 {:else}
-                    <img
-                        height="38"
-                        width="38"
-                        src={profile.badge.image_url}
-                        alt={profile.badge.name}
-                    />
+                    <img height="38" width="38" src={profile.badge.image_url} alt={profile.badge.name} />
                 {/if}
             {/if}
             {#if profile.is_verified}
-                <div class="verified">                    
+                <div class="verified">
                     <img height="38" width="38" src="./assets/icons/verified.svg" alt="verified" />
                 </div>
             {/if}
             <Reputation score={profile.rating_score} />
-            <div
-                class="profile-info-online flex-row"
-                class:online={profile.is_online}
-            >
-                {profile.is_online
-                    ? "в сети"
-                    : `был(а) в сети ${utils.returnTimeString(profile.last_activity_time)}`}
+            <div class="profile-info-online flex-row" class:online={profile.is_online}>
+                {profile.is_online ? "в сети" : `был(а) в сети ${utils.returnTimeString(profile.last_activity_time)}`}
             </div>
         </div>
         {#if profile.status.trim().length > 0}
@@ -93,10 +104,7 @@
         {#if profile.roles.length > 0}
             <div class="profile-info-roles flex-row">
                 {#each profile.roles as role}
-                    <div
-                        class="profile-info-role flex-row"
-                        style="--color: #{role.color}"
-                    >
+                    <div class="profile-info-role flex-row" style="--color: #{role.color}">
                         <div class="role-dot"></div>
                         <span>{role.name}</span>
                     </div>
@@ -110,14 +118,8 @@
                     <img src="./assets/icons/deny.svg" alt="banned" />
                 </div>
                 <div class="banned-text flex-column">
-                    <span
-                        >Пользователь был заблокирован за нарушение правил до {utils.returnTimeString(
-                            profile.ban_expires * 1000,
-                        )}</span
-                    >
-                    <span class="banned-reason"
-                        >Причина: {profile.ban_reason}</span
-                    >
+                    <span>Пользователь был заблокирован за нарушение правил до {utils.returnTimeString(profile.ban_expires * 1000)}</span>
+                    <span class="banned-reason">Причина: {profile.ban_reason}</span>
                 </div>
             </div>
         {/if}
@@ -132,6 +134,7 @@
 
     .profile-info-buttons {
         margin-top: 10px;
+        gap: 10px;
     }
 
     .banned-text {

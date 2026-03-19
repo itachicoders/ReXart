@@ -1,5 +1,6 @@
 <script>
     import { localStorageWritable } from "@babichjacob/svelte-localstorage";
+    import { onMount } from "svelte";
     import LeftMenuButton from "../left-menu/Button.svelte";
     import LeftMenuAvatar from "../left-menu/Avatar.svelte";
     import Home from "../../pages/Home.svelte";
@@ -11,11 +12,17 @@
     import { pageHistory } from "../stores/pageHistory.js";
     import Discover from "../../pages/Discover.svelte";
     import Search from "../../pages/Search.svelte";
+    import History from "../../pages/History.svelte";
+    import Related from "../../pages/Related.svelte";
+    import ReleaseCollections from "../../pages/ReleaseCollections.svelte";
+    import CreateCollection from "../../pages/CreateCollection.svelte";
+    import DiscoverFilter from "../../pages/DiscoverFilter.svelte";
     import HomeIcon from "../../icons/home.svg";
     import BookmarkIcon from "../../icons/bookmark.svg";
     import FriendsIcon from "../../icons/friends.svg";
     import DiscoverIcon from "../../icons/discover.svg";
     import SearchIcon from "../../icons/search.svg";
+    import ViewIcon from "../../icons/view.svg";
     import NotificationIcon from "../../icons/notification.svg";
     import SettingsIcon from "../../icons/settings.svg";
     import Settings from "../../pages/Settings.svelte";
@@ -41,7 +48,12 @@
         Profile,
         Login,
         Player,
-        Collection
+        Collection,
+        History,
+        Related,
+        ReleaseCollections,
+        CreateCollection,
+        DiscoverFilter,
     ];
 
     export let viewportComponent = null;
@@ -53,11 +65,35 @@
     };
 
     let utoken;
+    let myProfile = null;
+    let avatarCacheBust = 0;
 
     $: nCount = $notificationCount;
 
     const user_token = localStorageWritable("user_token", null);
-    user_token.subscribe((value) => (utoken = JSON.parse(value)));
+    user_token.subscribe((value) => {
+        utoken = JSON.parse(value);
+        refreshMyProfile();
+    });
+
+    function refreshMyProfile() {
+        myProfile = utoken ? anixApi.profile.info(utoken.id) : null;
+    }
+
+    function getAvatarWithCacheBust(avatar) {
+        if (!avatar) return "./assets/icons/defaultAvatar.svg";
+        if (!avatarCacheBust || avatar.startsWith("data:")) return avatar;
+        return `${avatar}${avatar.includes("?") ? "&" : "?"}v=${avatarCacheBust}`;
+    }
+
+    onMount(() => {
+        const handler = (event) => {
+            avatarCacheBust = event?.detail?.cacheBust ?? Date.now();
+            refreshMyProfile();
+        };
+        window.addEventListener("profile-avatar-updated", handler);
+        return () => window.removeEventListener("profile-avatar-updated", handler);
+    });
 
     window.updateViewportComponent = (page, args, history = false) => {
         setViewportScrollEvent(null);
@@ -71,7 +107,7 @@
             return;
 
         argsComponent = args ?? null;
-        viewportComponent = typeof(page) == "number" ? views[page] : page;
+        viewportComponent = typeof page == "number" ? views[page] : page;
 
         if (viewportComponent != Player && viewportComponent != Release) {
             discordRPC.setActivity({
@@ -86,17 +122,18 @@
             });
         }
 
-	if (!history && viewInfoOld.viewportComponent !== Player) {
-		pageHistory.update(h => {
-			if (h[0]?.page !== viewInfoOld.viewportComponent || JSON.stringify(h[0].args) !== JSON.stringify(viewInfoOld.args)) {
-				h.unshift({ page: viewInfoOld.viewportComponent, args: viewInfoOld.args });
-			}
-			return h;
-		});
-	}
+        if (!history && viewInfoOld.viewportComponent !== Player) {
+            pageHistory.update((h) => {
+                if (
+                    h[0]?.page !== viewInfoOld.viewportComponent ||
+                    JSON.stringify(h[0].args) !== JSON.stringify(viewInfoOld.args)
+                ) {
+                    h.unshift({ page: viewInfoOld.viewportComponent, args: viewInfoOld.args });
+                }
+                return h;
+            });
+        }
     };
-
-    let myProfile = anixApi.profile.info(utoken?.id);
 </script>
 
 {#snippet defaultAvatar(callback)}
@@ -118,9 +155,8 @@
                 {@render defaultAvatar(null)}
             {:then p}
                 <LeftMenuAvatar
-                    onClickCallback={() =>
-                        updateViewportComponent(9, utoken.id)}
-                    avatar={p.profile.avatar}
+                    onClickCallback={() => updateViewportComponent(9, utoken.id)}
+                    avatar={getAvatarWithCacheBust(p.profile.avatar)}
                 />
             {/await}
         {/if}
@@ -129,18 +165,23 @@
             icon={HomeIcon}
             selected={viewportComponent == views[0]}
             viewportComponentIndex={0}
-            argsComponent = {{
-                typeReleases: 0
+            argsComponent={{
+                typeReleases: 0,
             }}
         />
         <LeftMenuButton
             icon={BookmarkIcon}
             selected={viewportComponent == views[1]}
             viewportComponentIndex={1}
-            argsComponent = {{
+            argsComponent={{
                 typeBookmark: 0,
-                sort: 1
+                sort: 1,
             }}
+        />
+        <LeftMenuButton
+            icon={ViewIcon}
+            selected={viewportComponent == views[13]}
+            viewportComponentIndex={13}
         />
         <LeftMenuButton
             icon={FriendsIcon}
@@ -154,7 +195,7 @@
         />
         <LeftMenuButton
             icon={DiscoverIcon}
-            selected={viewportComponent == views[4]}
+            selected={viewportComponent == views[4] || viewportComponent == views[17]}
             viewportComponentIndex={4}
         />
         <LeftMenuButton
@@ -162,7 +203,7 @@
             selected={viewportComponent == views[5]}
             viewportComponentIndex={5}
             argsComponent={{
-                query: null
+                query: null,
             }}
         />
     </div>

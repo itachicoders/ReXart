@@ -28,9 +28,9 @@
 <div
     class="modal-background"
     style="--display: {showed ? 'flex' : 'none'}"
-    onclick={() => {if (canCloseOnBackground) closeModal();}}
+    on:click={() => {if (canCloseOnBackground) closeModal();}}
 >
-    <div tabindex="-1" class="modal" style="--width: {modalSize.width}; --height: {modalSize.height};" onclick={(event) => event.stopPropagation()}>
+    <div tabindex="-1" class="modal" style="--width: {modalSize.width}; --height: {modalSize.height};" on:click={(event) => event.stopPropagation()}>
         {#if showed}
             <svelte:component this={modalComponent} args={modalArgs} on:setTitle={(e) => modalTitle = e.detail} showed={showed} on:updateComponent={(e) => updateComponent(e.detail)} on:closeModal={() => closeModal()}></svelte:component>
         {/if}

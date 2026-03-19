@@ -4,6 +4,13 @@
     import { AniLibriaParser, KodikParser } from "anixartjs";
     import { localStorageWritable } from "@babichjacob/svelte-localstorage";
     import DropdownButton from "../buttons/DropdownButton.svelte";
+    import {
+        getPreferredQuality,
+        getPreferredSourceName,
+        getReleasePreference,
+        normalizePlayingSettings,
+        updateReleasePreference,
+    } from "../../playerPreferences.js";
 
     const dispatch = createEventDispatcher();
 
@@ -20,7 +27,6 @@
     let backgroundModal = document.querySelector(".modal-background");
 
     anixApi.release.getDubbers(args.id).then((v) => {
-        selectDubber(v.types[0].id);
         dubberList = v.types.map((x) => ({
             label: x.name,
             value: x.id,
@@ -30,6 +36,10 @@
                     : x.icon,
             description: `${x.view_count} просмотров | ${x.episodes_count} эпизодов`,
         }));
+
+        const preferredDubberId = getReleasePreference(playingSettings, args.id)?.dubberId;
+        const matchedDubber = v.types.find((item) => item.id === preferredDubberId);
+        selectDubber(matchedDubber ? matchedDubber.id : v.types[0].id);
     });
 
     let sourceList = {
@@ -42,12 +52,8 @@
     );
 
     playingSettingsRaw.subscribe((value) => {
-        playingSettings = value;
+        playingSettings = normalizePlayingSettings(value);
     });
-
-    let favoriteSourceName = utils.sourceValues.find(
-        (x) => x.value === playingSettings?.defaultSource,
-    ).label;
 
     async function selectDubber(id) {
         currentDubberId = id;
@@ -59,8 +65,9 @@
             currentDubberId,
         );
 
+        const preferredSourceName = getPreferredSourceName(playingSettings, args.id);
         let matchedSource = sourceList.sources.find(
-            (x) => x.name == favoriteSourceName,
+            (x) => x.name == preferredSourceName,
         );
 
         currentSourceId = !matchedSource
@@ -203,15 +210,41 @@
                             );
                         }
 
+                        const preferredQuality = getPreferredQuality(
+                            playingSettings,
+                            args.id,
+                        );
+                        const availableQualities = Object.keys(
+                            avaliableQuality,
+                        ).map((value) => Number(value));
+                        const selectedQuality = avaliableQuality[
+                            String(preferredQuality)
+                        ]
+                            ? preferredQuality
+                            : availableQualities.sort((a, b) => b - a)[0] ?? 720;
                         const url =
-                            avaliableQuality[
-                                String(playingSettings.defaultQuality)
-                            ]?.src ?? avaliableQuality["720"]?.src;
+                            avaliableQuality[String(selectedQuality)]?.src ??
+                            avaliableQuality["720"]?.src;
+
+                        const nextSettings = updateReleasePreference(
+                            playingSettings,
+                            args.id,
+                            {
+                                dubberId: currentDubberId,
+                                sourceName: currentSourceName,
+                                quality: selectedQuality,
+                            },
+                        );
+                        playingSettings = nextSettings;
+                        playingSettingsRaw.set(nextSettings);
 
                         updateViewportComponent(11, {
                             src: `${URL.canParse(url) ? url : `https:${url}`}`,
-                            currentQuality: 720,
+                            currentQuality: selectedQuality,
                             avaliableQuality,
+                            currentDubberId,
+                            currentSourceId,
+                            currentSourceName,
                             release: args,
                             episodes: i.episodes,
                             currentEpisode: d,
