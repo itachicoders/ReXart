@@ -84,14 +84,6 @@
         return `${args.query} · ${whereLabel}`;
     }
 
-    function openRelatedPage(related) {
-        updateViewportComponent(14, {
-            id: related.id,
-            name_ru: related.name_ru ?? related.name,
-            description: related.description,
-            image: related.images?.[1] ?? related.images?.[0] ?? "",
-        });
-    }
 
     async function loadPage(targetPage = 0) {
         return searchContent({
@@ -256,35 +248,6 @@
             <Preloader />
         {:then data}
             <span class="title">Результаты поиска</span>
-            {#if getCurrentWhere() === "releases" && data.related}
-                <button class="related-release-button" on:click={() => openRelatedPage(data.related)}>
-                    <div class="related-release flex-row">
-                        <div class="release-images flex-row">
-                            {#each Array(3) as _, i}
-                                <img
-                                    src={data.related.images[i] ?? "./assets/images/no_image.jpg"}
-                                    width="180px"
-                                    height="240px"
-                                    alt="Release"
-                                />
-                            {/each}
-                        </div>
-                        <div class="flex-column related-info">
-                            <span class="related-title">{data.related.name_ru}</span>
-                            <span class="related-count">
-                                {data.related.release_count}
-                                {utils.getNumericWord(data.related.release_count, [
-                                    "релиз в",
-                                    "релиза во",
-                                    "релизов в",
-                                ])} франшизе
-                            </span>
-                            <span class="related-description">{data.related.description}</span>
-                            <span class="related-open-hint">Открыть полную страницу франшизы →</span>
-                        </div>
-                    </div>
-                </button>
-            {/if}
 
             {#if currentResultType() === "profiles"}
                 {#if (data?.content?.length ?? 0) === 0}

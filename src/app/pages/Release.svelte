@@ -7,7 +7,6 @@
     import CommentItem from "../components/elements/CommentItem.svelte";
     import AgeRate from "../components/release/AgeRate.svelte";
     import Slider from "../components/elements/Slider.svelte";
-    import RelatedReleases from "../components/release/RelatedReleases.svelte";
     import AnimePoster from "../components/release/AnimePoster.svelte";
     import MinInfo from "../components/release/MinInfo.svelte";
     import LicensedPlatforms from "../components/release/LicensedPlatforms.svelte";
@@ -116,16 +115,6 @@
         }
     }
 
-    function openRelatedPage(related, currentRelease) {
-        if (!related?.id) return;
-
-        updateViewportComponent(14, {
-            id: related.id,
-            name_ru: related.name_ru ?? related.name,
-            description: related.description ?? currentRelease?.description,
-            image: related.image ?? currentRelease?.image ?? "",
-        });
-    }
 
     function openCollectionsPage(currentRelease) {
         updateViewportComponent(15, {
@@ -314,17 +303,6 @@
                     >
                         Коллекции · {collectionCount}
                     </BaseMainButton>
-                    {#if r.release.related?.id}
-                        <BaseMainButton
-                            style="transparent"
-                            borderRadius="10"
-                            height={38}
-                            currentColorVar="--secondary-text-color"
-                            onClickCallback={() => openRelatedPage(r.release.related, r.release)}
-                        >
-                            Франшиза
-                        </BaseMainButton>
-                    {/if}
                     <BaseMainButton
                         style="transparent"
                         borderRadius="10"
@@ -361,25 +339,12 @@
                                 }}
                             />
                         </div>
-                    {:else if r.release.related_releases.length > 0}
-                        <RelatedReleases
-                            release={r.release}
-                            on:viewAllCalled={() =>
-                                openRelatedPage(r.release.related, r.release)}
-                        />
                     {/if}
                     <div class="release-side-info flex-column">
                         <MinInfo release={r.release} />
                         <LicensedPlatforms releaseId={r.release.id} />
                     </div>
                 </div>
-                {#if r.release.screenshot_images.length > 0 && r.release.related_releases.length > 0}
-                    <RelatedReleases
-                        release={r.release}
-                        on:viewAllCalled={() =>
-                            openRelatedPage(r.release.related, r.release)}
-                    />
-                {/if}
                 <div class="release-comments flex-column">
                     <div class="comments-title flex-row">
                         <div class="flex-column">
