@@ -10,6 +10,10 @@
     import AuthPlaceholder from "./AuthPlaceholder.svelte";
     import MetaInfo from "../components/gui/MetaInfo.svelte";
     import BaseModal from "../components/modal/BaseModal.svelte";
+    import CommentsModal from "../components/release/CommentsModal.svelte";
+    import CommentItem from "../components/elements/CommentItem.svelte";
+    import { fetchCommentsPage } from "../api/comments.js";
+    import { localStorageWritable } from "@babichjacob/svelte-localstorage";
 
     export let args;
     let page = 0;
@@ -17,9 +21,15 @@
     let updateInfo = false;
     let modalSubTitle = null;
     let showAuthModal = false;
+    let showCommentsModal = false;
+    let openCommentsComposer = false;
 
     let isFavorite = false;
     let favoriteCount = 0;
+    let utoken;
+
+    const userToken = localStorageWritable("user_token", null);
+    userToken.subscribe((value) => (utoken = JSON.parse(value)));
 
     let info = getCollectionInfo();
 
@@ -30,9 +40,17 @@
             page,
         );
 
+        const comments = await fetchCommentsPage({
+            type: "collection",
+            entityId: args.id,
+            page: 0,
+            sort: 1,
+        }).catch(() => ({ content: [], total_count: 0 }));
+
         return {
             info: base,
             releases: releases,
+            comments: comments,
         };
     }
 
@@ -101,7 +119,7 @@
         <div class="collection-author flex-row">
             <button
                 class="author flex-row"
-                onclick={() =>
+                on:click={() =>
                     updateViewportComponent(9, c.info.collection.creator.id)}
             >
                 <div class="collection-author-image">
@@ -197,11 +215,64 @@
                 />
             </BaseMainButton>
             -->
+            {#if c.info.collection.creator.id == utoken?.id}
+                <BaseMainButton
+                    style="transparent"
+                    borderRadius="10"
+                    currentColorVar="--secondary-text-color"
+                    onClickCallback={() => updateViewportComponent(16, { mode: "edit", id: c.info.collection.id })}
+                >
+                    Редактировать
+                </BaseMainButton>
+            {/if}
         </div>
         <span class="collection-description"
             >{c.info.collection.description}</span
         >
     </div>
+    <div class="collection-comments flex-column">
+        <div class="comments-title flex-row">
+            <div class="flex-column">
+                <span>Комментарии</span>
+                <span class="minText">Обсуждение коллекции</span>
+            </div>
+            <div class="comments-actions flex-row">
+                {#if anixApi.client.token}
+                    <button
+                        class="add-comment-button"
+                        on:click={() => {
+                            openCommentsComposer = true;
+                            showCommentsModal = true;
+                        }}
+                    >
+                        Оставить комментарий
+                    </button>
+                {/if}
+                <button
+                    class="show-all-comments"
+                    on:click={() => {
+                        openCommentsComposer = false;
+                        showCommentsModal = true;
+                    }}
+                >
+                    Показать все
+                </button>
+            </div>
+        </div>
+        {#if c.comments?.content?.length > 0}
+            {#each c.comments.content.slice(0, 5) as comment}
+                <CommentItem
+                    {comment}
+                    type="collection"
+                    entityId={args.id}
+                    on:showAuthModal={() => (showAuthModal = true)}
+                />
+            {/each}
+        {:else}
+            <div class="empty-comments">Комментариев пока нет</div>
+        {/if}
+    </div>
+
     <div class="releases-container">
         <div class="collection-releases flex-column">
             <span class="collection-releases-title"
@@ -230,7 +301,60 @@
     on:closeModal={() => (showAuthModal = false)}
 />
 
+<BaseModal
+    modalComponent={CommentsModal}
+    showed={showCommentsModal}
+    modalArgs={{ id: args.id, type: "collection", openComposer: openCommentsComposer }}
+    bind:modalTitle={modalSubTitle}
+    modalSize={{ width: "75%", height: "80%" }}
+    on:closeModal={() => (showCommentsModal = false)}
+/>
+
 <style>
+    .collection-comments {
+        width: 880px;
+        margin: 5px auto 25px auto;
+    }
+
+    .comments-title {
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+    }
+
+    .comments-title > div > span:first-child {
+        font-size: 26px;
+        font-weight: 600;
+        color: var(--main-text-color);
+    }
+
+    .minText,
+    .empty-comments {
+        color: var(--secondary-text-color);
+    }
+
+    .comments-actions {
+        gap: 10px;
+    }
+
+    .add-comment-button,
+    .show-all-comments {
+        padding: 10px 14px;
+        border-radius: 10px;
+        color: var(--main-text-color);
+        border: 1px solid var(--gray-btn);
+        background-color: transparent;
+        font-weight: 600;
+    }
+
+    .add-comment-button {
+        background-color: var(--accent-color, #2563eb);
+        color: white;
+        border: none;
+    }
+
     .collection-info {
         margin: 10px 20px 30px 20px;
         align-items: center;

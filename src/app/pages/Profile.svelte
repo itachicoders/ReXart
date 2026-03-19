@@ -120,8 +120,11 @@
         {#if p.profileInfo.profile.history.length > 0 && !p.profileInfo.profile.is_counts_hidden}
         <div class="container">
             <div class="watch-history">
-                <div class="watch-history-header">
-                    История просмотра
+                <div class="watch-history-header flex-row">
+                    <span>История просмотра</span>
+                    {#if p.profileInfo.is_my_profile}
+                        <ViewAllButton onClickCallback={() => updateViewportComponent(13)} />
+                    {/if}
                 </div>
                 <AnimeCardRow releases={p.profileInfo.profile.history} type="watched" />
             </div>
@@ -141,6 +144,7 @@
         margin-bottom: 20px;
         margin-top: 10px;
         font-weight: 500;
+        align-items: center;
     }
 
 

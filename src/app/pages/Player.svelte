@@ -31,6 +31,11 @@
     import { onMount, onDestroy } from "svelte";
     import { AniLibriaParser, SibnetParser, KodikParser } from "anixartjs";
     import utils from "../utils";
+    import {
+        getPreferredQuality,
+        normalizePlayingSettings,
+        updateReleasePreference,
+    } from "../playerPreferences.js";
 
     const upscaleModeMap = {
         0: DoG,
@@ -79,6 +84,8 @@
 
     let progressPercent, loadedPercent;
 
+    currentEpisode = args.currentEpisode;
+
     let isHidden, isPaused, isTimePosClick, isFullscreen;
     let pressedKeys = new Set();
 
@@ -97,7 +104,7 @@
     );
 
     playingSettingsRaw.subscribe((value) => {
-        playingSettings = value;
+        playingSettings = normalizePlayingSettings(value);
     });
 
     const upscaleSettingsRaw = localStorageWritable(
@@ -127,6 +134,24 @@
     }
 
     let loading = true;
+
+    function saveReleasePreferenceFromEpisode(episode, quality = null) {
+        const source =
+            typeof episode?.source == "number"
+                ? args.episodes.find((x) => episode.source == x.source["@id"])?.source
+                : episode?.source;
+
+        if (!source) return;
+
+        const nextSettings = updateReleasePreference(playingSettings, args.release.id, {
+            dubberId: source.type?.id ?? args.currentDubberId ?? null,
+            sourceName: source.name ?? args.currentSourceName ?? null,
+            quality: quality ?? args.currentQuality ?? playingSettings.defaultQuality,
+        });
+
+        playingSettings = nextSettings;
+        playingSettingsRaw.set(nextSettings);
+    }
 
     function hideOnIdle() {
         if (timeout) {
@@ -204,11 +229,25 @@
                 break;
         }
 
+        const preferredQuality = getPreferredQuality(
+            playingSettings,
+            args.release.id,
+        );
+        const availableQualities = Object.keys(avaliableQuality).map((value) =>
+            Number(value),
+        );
+        const selectedQuality = avaliableQuality[String(preferredQuality)]
+            ? preferredQuality
+            : availableQualities.sort((a, b) => b - a)[0] ?? 720;
         const url =
-            avaliableQuality[String(playingSettings.defaultQuality)]?.src ??
+            avaliableQuality[String(selectedQuality)]?.src ??
             avaliableQuality["720"]?.src;
 
         args.avaliableQuality = avaliableQuality;
+        args.currentQuality = selectedQuality;
+        args.currentDubberId = source.type?.id ?? args.currentDubberId;
+        args.currentSourceId = source.id ?? args.currentSourceId;
+        args.currentSourceName = source.name ?? args.currentSourceName;
 
         link = `${URL.canParse(url) ? url : `https:${url}`}`;
 
@@ -233,18 +272,22 @@
 
         await video.play();
 
+        const historySourceId = source.id ?? args.episodes[0].source.id;
+
         if (!playingSettings.disableHistory) {
             anixApi.release.markEpisodeAsWatched(
                 args.release.id,
-                args.episodes[0].source.id,
+                historySourceId,
                 currentEpisode.position,
             );
             anixApi.release.addToHistory(
                 args.release.id,
-                args.episodes[0].source.id,
+                historySourceId,
                 currentEpisode.position,
             );
         }
+
+        saveReleasePreferenceFromEpisode(episode, args.currentQuality);
 
         analytics.trackEvent("play_anime", {
             source: source.name,
@@ -350,6 +393,7 @@
 
         args.src = url;
         args.currentQuality = quality;
+        saveReleasePreferenceFromEpisode(currentEpisode, quality);
     }
 
     async function init() {

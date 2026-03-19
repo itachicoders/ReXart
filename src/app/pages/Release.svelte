@@ -1,5 +1,6 @@
 <script>
     import LeftReleaseBaseButton from "../components/buttons/LeftReleaseBaseButton.svelte";
+    import BaseMainButton from "../components/buttons/BaseMainButton.svelte";
     import Preloader from "../components/gui/Preloader.svelte";
     import RatingGraph from "../components/release/RatingGraph.svelte";
     import BookmarkTypes from "../components/elements/BookmarkTypes.svelte";
@@ -9,11 +10,13 @@
     import RelatedReleases from "../components/release/RelatedReleases.svelte";
     import AnimePoster from "../components/release/AnimePoster.svelte";
     import MinInfo from "../components/release/MinInfo.svelte";
+    import LicensedPlatforms from "../components/release/LicensedPlatforms.svelte";
+    import AddToCollectionModal from "../components/release/AddToCollectionModal.svelte";
+    import DownloadModal from "../components/release/DownloadModal.svelte";
     import BaseModal from "../components/modal/BaseModal.svelte";
     import SelectEpisodes from "../components/release/SelectEpisode.svelte";
     import ViewAllButton from "../components/buttons/ViewAllButton.svelte";
     import CommentsModal from "../components/release/CommentsModal.svelte";
-    import RelatedReleasesModal from "../components/release/RelatedReleasesModal.svelte";
     import MetaInfo from "../components/gui/MetaInfo.svelte";
     import NotFound from "./NotFound.svelte";
     import Icon from "../components/elements/Icon.svelte";
@@ -22,7 +25,6 @@
     import BookmarkStatsInfo from "../components/profile/BookmarkStatsInfo.svelte";
     import AuthPlaceholder from "./AuthPlaceholder.svelte";
     import NotAvaliable from "./NotAvaliable.svelte";
-    import { onDestroy } from "svelte";
 
     export let args;
     const release = anixApi.release.info(args.id, true);
@@ -46,14 +48,20 @@
     });
 
     let showSelectEpisodeModal,
-        showCommentsModal,
-        showRelatedReleasesModal = false,
+        showCommentsModal = false,
+        showAddToCollectionModal = false,
+        showDownloadModal = false,
         showAuthModal = false,
-        showNotAvaliableModal = false;
+        showNotAvaliableModal = false,
+        openCommentsComposer = false;
     let modalSubTitle = null;
 
     let isFavorite = false;
     let favoriteCount = 0;
+    let collectionCount = 0;
+    let toastMessage = "";
+    let toastTimer = null;
+    let initializedReleaseId = null;
 
     async function setFavorite(i) {
         isFavorite
@@ -68,8 +76,73 @@
         favoriteCount = i;
     }
 
+    function setCollectionCount(i) {
+        collectionCount = i ?? 0;
+    }
+
     function changeFavorite(i) {
         isFavorite = i;
+    }
+
+    function syncReleaseState(releaseInfo) {
+        if (!releaseInfo || initializedReleaseId === releaseInfo.id) return;
+
+        initializedReleaseId = releaseInfo.id;
+        setFavoriteCount(releaseInfo.favorites_count ?? 0);
+        changeFavorite(releaseInfo.is_favorite ?? false);
+        setCollectionCount(releaseInfo.collection_count ?? 0);
+    }
+
+    function showToast(message) {
+        toastMessage = message;
+
+        if (toastTimer) {
+            clearTimeout(toastTimer);
+        }
+
+        toastTimer = setTimeout(() => {
+            toastMessage = "";
+            toastTimer = null;
+        }, 2200);
+    }
+
+    async function copyReleaseLink(releaseId) {
+        try {
+            await navigator.clipboard.writeText(`https://anixart.app/release/${releaseId}`);
+            showToast("Ссылка на релиз скопирована.");
+        } catch (error) {
+            console.error("Не удалось скопировать ссылку на релиз:", error);
+            showToast("Не удалось скопировать ссылку.");
+        }
+    }
+
+    function openRelatedPage(related, currentRelease) {
+        if (!related?.id) return;
+
+        updateViewportComponent(14, {
+            id: related.id,
+            name_ru: related.name_ru ?? related.name,
+            description: related.description ?? currentRelease?.description,
+            image: related.image ?? currentRelease?.image ?? "",
+        });
+    }
+
+    function openCollectionsPage(currentRelease) {
+        updateViewportComponent(15, {
+            id: currentRelease.id,
+            title: currentRelease.title_ru,
+            count: collectionCount,
+        });
+    }
+
+    function handleCollectionAdded(payload) {
+        if (payload?.countDelta) {
+            collectionCount += payload.countDelta;
+        }
+
+        if (payload?.message) {
+            showToast(payload.message);
+        }
     }
 
     function returnSoonText(release) {
@@ -91,8 +164,7 @@
     {#if r.release == null || r.code == 2}
         <NotFound />
     {:else}
-        {setFavoriteCount(r.release.favorites_count)}
-        {changeFavorite(r.release.is_favorite)}
+        {syncReleaseState(r.release)}
         {#key modalSubTitle}
             <MetaInfo
                 subTitle={modalSubTitle === null
@@ -104,12 +176,12 @@
             <div
                 tabindex="-1"
                 class="left-info-release hide-scroll flex-column"
-                onmouseenter={() => {
+                on:mouseenter={() => {
                     document
                         .querySelector(".left-info-release")
                         .classList.remove("hide-scroll");
                 }}
-                onmouseleave={() => {
+                on:mouseleave={() => {
                     document
                         .querySelector(".left-info-release")
                         .classList.add("hide-scroll");
@@ -217,6 +289,61 @@
                     </div>
                 {/if}
                 <div class="release-description">{r.release.description}</div>
+                <div class="release-actions flex-row">
+                    <BaseMainButton
+                        style="transparent"
+                        borderRadius="10"
+                        height={38}
+                        currentColorVar="--secondary-text-color"
+                        onClickCallback={() => {
+                            if (anixApi.client.token) {
+                                showAddToCollectionModal = true;
+                            } else {
+                                showAuthModal = true;
+                            }
+                        }}
+                    >
+                        В коллекцию
+                    </BaseMainButton>
+                    <BaseMainButton
+                        style="transparent"
+                        borderRadius="10"
+                        height={38}
+                        currentColorVar="--secondary-text-color"
+                        onClickCallback={() => openCollectionsPage(r.release)}
+                    >
+                        Коллекции · {collectionCount}
+                    </BaseMainButton>
+                    {#if r.release.related?.id}
+                        <BaseMainButton
+                            style="transparent"
+                            borderRadius="10"
+                            height={38}
+                            currentColorVar="--secondary-text-color"
+                            onClickCallback={() => openRelatedPage(r.release.related, r.release)}
+                        >
+                            Франшиза
+                        </BaseMainButton>
+                    {/if}
+                    <BaseMainButton
+                        style="transparent"
+                        borderRadius="10"
+                        height={38}
+                        currentColorVar="--secondary-text-color"
+                        onClickCallback={() => (showDownloadModal = true)}
+                    >
+                        Скачать
+                    </BaseMainButton>
+                    <BaseMainButton
+                        style="transparent"
+                        borderRadius="10"
+                        height={38}
+                        currentColorVar="--secondary-text-color"
+                        onClickCallback={() => copyReleaseLink(r.release.id)}
+                    >
+                        Поделиться
+                    </BaseMainButton>
+                </div>
                 <div class="flex-row">
                     {#if r.release.screenshot_images.length > 0}
                         <div class="release-images">
@@ -238,16 +365,19 @@
                         <RelatedReleases
                             release={r.release}
                             on:viewAllCalled={() =>
-                                (showRelatedReleasesModal = true)}
+                                openRelatedPage(r.release.related, r.release)}
                         />
                     {/if}
-                    <MinInfo release={r.release} />
+                    <div class="release-side-info flex-column">
+                        <MinInfo release={r.release} />
+                        <LicensedPlatforms releaseId={r.release.id} />
+                    </div>
                 </div>
                 {#if r.release.screenshot_images.length > 0 && r.release.related_releases.length > 0}
                     <RelatedReleases
                         release={r.release}
                         on:viewAllCalled={() =>
-                            (showRelatedReleasesModal = true)}
+                            openRelatedPage(r.release.related, r.release)}
                     />
                 {/if}
                 <div class="release-comments flex-column">
@@ -256,20 +386,36 @@
                             <span>Комментарии</span>
                             <span class="minText">Популярные и актуальные</span>
                         </div>
+                        <div class="comments-actions flex-row">
+                            {#if anixApi.client.token}
+                                <button
+                                    class="add-comment-button"
+                                    on:click={() => {
+                                        openCommentsComposer = true;
+                                        showCommentsModal = true;
+                                    }}
+                                >
+                                    Оставить комментарий
+                                </button>
+                            {/if}
+                            <ViewAllButton
+                                marginLeft={"0"}
+                                width={"220px"}
+                                onClickCallback={() => {
+                                    openCommentsComposer = false;
+                                    showCommentsModal = true;
+                                }}
+                            />
+                        </div>
                     </div>
                     {#each r.release.comments as comment}
                         <CommentItem
                             {comment}
+                            type="release"
+                            entityId={r.release.id}
                             on:showAuthModal={() => (showAuthModal = true)}
-                            on:notAvaliable={() =>
-                                (showNotAvaliableModal = true)}
                         />
                     {/each}
-                    <ViewAllButton
-                        marginLeft={"0"}
-                        width={"100%"}
-                        onClickCallback={() => (showCommentsModal = true)}
-                    />
                 </div>
             </div>
         </div>
@@ -285,16 +431,30 @@
             modalComponent={CommentsModal}
             modalSize={{ width: "75%", height: "80%" }}
             showed={showCommentsModal}
-            modalArgs={r.release}
+            modalArgs={{ id: r.release.id, type: "release", openComposer: openCommentsComposer }}
             bind:modalTitle={modalSubTitle}
             on:closeModal={() => (showCommentsModal = false)}
         />
         <BaseModal
-            modalComponent={RelatedReleasesModal}
-            modalArgs={r.release.related}
-            showed={showRelatedReleasesModal}
+            modalComponent={AddToCollectionModal}
+            showed={showAddToCollectionModal}
+            modalSize={{ width: "80%", height: "85%" }}
+            modalArgs={{ releaseId: r.release.id, onAdded: handleCollectionAdded }}
             bind:modalTitle={modalSubTitle}
-            on:closeModal={() => (showRelatedReleasesModal = false)}
+            on:closeModal={() => (showAddToCollectionModal = false)}
+        />
+
+        <BaseModal
+            modalComponent={DownloadModal}
+            showed={showDownloadModal}
+            modalSize={{ width: "84%", height: "88%" }}
+            modalArgs={{
+                releaseId: r.release.id,
+                releaseTitleRu: r.release.title_ru,
+                releaseTitleOriginal: r.release.title_original,
+            }}
+            bind:modalTitle={modalSubTitle}
+            on:closeModal={() => (showDownloadModal = false)}
         />
 
         <BaseModal
@@ -304,6 +464,10 @@
             modalSize={{ width: "70%", height: "90%" }}
             on:closeModal={() => (showAuthModal = false)}
         />
+
+        {#if toastMessage}
+            <div class="release-toast">{toastMessage}</div>
+        {/if}
 
         <BaseModal
             modalComponent={NotAvaliable}
@@ -316,6 +480,28 @@
 {/await}
 
 <style>
+
+    .release-actions {
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+    }
+
+    .release-toast {
+        position: fixed;
+        left: calc(75px + 50%);
+        bottom: 22px;
+        transform: translateX(-50%);
+        z-index: 9;
+        padding: 12px 18px;
+        border-radius: 12px;
+        background-color: var(--alt-background-color);
+        color: var(--main-text-color);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+        font-size: 14px;
+        font-weight: 600;
+    }
+
     :global(.release-minInfo) {
         margin-top: 40px;
         margin-left: auto;
@@ -379,6 +565,21 @@
 
     .rating-votes {
         font-weight: bold;
+    }
+
+    .comments-actions {
+        margin-left: auto;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .add-comment-button {
+        padding: 10px 14px;
+        border-radius: 10px;
+        background-color: var(--accent-color, #2563eb);
+        color: white;
+        font-weight: 600;
     }
 
     .release-comments {
@@ -448,6 +649,10 @@
 
     .right-info-release {
         margin-left: 20px;
+    }
+
+    .release-side-info {
+        margin-left: auto;
     }
 
     .release-title {

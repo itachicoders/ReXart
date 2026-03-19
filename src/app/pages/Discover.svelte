@@ -4,9 +4,12 @@
     import AnimeFullRowCard from "../components/elements/AnimeFullRowCard.svelte";
     import AnimeColumnCard from "../components/elements/AnimeColumnCard.svelte";
     import ViewAllButton from "../components/buttons/ViewAllButton.svelte";
+    import BaseMainButton from "../components/buttons/BaseMainButton.svelte";
     import CommentOutOfRelesaeItem from "../components/elements/CommentOutOfRelesaeItem.svelte";
     import BaseModal from "../components/modal/BaseModal.svelte";
     import WatchingModal from "../components/discover/WatchingModal.svelte";
+    import PopularModal from "../components/discover/PopularModal.svelte";
+    import ScheduleModal from "../components/discover/ScheduleModal.svelte";
     import MetaInfo from "../components/gui/MetaInfo.svelte";
 
     async function getDiscover() {
@@ -36,9 +39,11 @@
         });
     }
 
-    let windowWidth, windowHeight, height, width, modalSubTitle;
+    let windowWidth, modalSubTitle;
     let viewLastCard = false,
-        watchingModalShowed = false;
+        watchingModalShowed = false,
+        popularModalShowed = false,
+        scheduleModalShowed = false;
 
     let activeIndex = 0;
 
@@ -65,7 +70,7 @@
     }
 </script>
 
-<svelte:window bind:outerWidth={windowWidth} bind:outerHeight={windowHeight} />
+<svelte:window bind:outerWidth={windowWidth} />
 
 <MetaInfo subTitle="Обзор" />
 
@@ -73,11 +78,11 @@
     <Preloader />
 {:then d}
     <div class="interesting-slider-wrapper">
-        <button class="nav prev" onclick={sliderPrevClick}>‹</button>
+        <button class="nav prev" on:click={sliderPrevClick}>‹</button>
         <div class="interesting flex-row">
             <div class="spacer"></div>
             {#each d.interesting.content as r}
-            <button class="interesting-item" onclick={interestingItemClick(r)}>
+            <button class="interesting-item" on:click={interestingItemClick(r)}>
                 <div class="flex-column">
                     <AnimePoster
                         size={{ height: 420 }}
@@ -92,9 +97,24 @@
             {/each}
             <div class="spacer"></div>
         </div>
-        <button class="nav next" onclick={sliderNextClick}>›</button>
+        <button class="nav next" on:click={sliderNextClick}>›</button>
     </div>
     <div class="container flex-column">
+        <div class="discover-tools-grid">
+            <BaseMainButton style="primary" borderRadius={16} customClasses="discover-tool" onClickCallback={() => (popularModalShowed = true)}>
+                Популярное
+            </BaseMainButton>
+            <BaseMainButton style="primary" borderRadius={16} customClasses="discover-tool" onClickCallback={() => (scheduleModalShowed = true)}>
+                Расписание
+            </BaseMainButton>
+            <BaseMainButton style="transparent" borderRadius={16} customClasses="discover-tool" onClickCallback={() => updateViewportComponent(3)}>
+                Коллекции
+            </BaseMainButton>
+            <BaseMainButton style="transparent" borderRadius={16} customClasses="discover-tool" onClickCallback={() => updateViewportComponent(17, { filter: null, title: "Фильтр релизов" })}>
+                Фильтр
+            </BaseMainButton>
+        </div>
+
         <div class="discussing">
             <span class="main-title title-margin">Обсуждаемое сегодня</span>
             {#each d.discussing.content as r}
@@ -108,9 +128,7 @@
         <div class="anime-column-row">
             <div class="current-view flex-row">
                 <span class="main-title">Сейчас смотрят</span>
-                <ViewAllButton
-                    onClickCallback={() => (watchingModalShowed = true)}
-                />
+                <ViewAllButton onClickCallback={() => (watchingModalShowed = true)} />
             </div>
 
             <div class="anime-row flex-row">
@@ -128,9 +146,7 @@
                     <CommentOutOfRelesaeItem
                         comment={r}
                         release={typeof r.release == "number"
-                            ? d.comments.content.find(
-                                  (c) => c.release["@id"] == r.release,
-                              ).release
+                            ? d.comments.content.find((c) => c.release["@id"] == r.release).release
                             : null}
                     />
                 </div>
@@ -145,9 +161,37 @@
         bind:modalTitle={modalSubTitle}
         on:closeModal={() => (watchingModalShowed = false)}
     />
+
+    <BaseModal
+        modalComponent={PopularModal}
+        showed={popularModalShowed}
+        modalSize={{ width: "84%", height: "88%" }}
+        on:closeModal={() => (popularModalShowed = false)}
+    />
+
+    <BaseModal
+        modalComponent={ScheduleModal}
+        showed={scheduleModalShowed}
+        modalSize={{ width: "84%", height: "88%" }}
+        on:closeModal={() => (scheduleModalShowed = false)}
+    />
 {/await}
 
 <style>
+    .discover-tools-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        width: calc(100% - 40px);
+        margin: 20px 20px 5px 20px;
+    }
+
+    :global(.discover-tool) {
+        min-height: 54px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
     .interesting {
         width: 100%;
         margin-top: 20px;
@@ -244,6 +288,7 @@
     .nav.prev {
         left: 60px;
     }
+
     .nav.next {
         right: 60px;
     }
@@ -258,37 +303,5 @@
         padding-bottom: 4px;
         margin-bottom: 5px;
         font-size: 14px;
-        display: flex;
-        width: fit-content;
-    }
-
-    .interesting-item {
-        flex: 0 0 auto;
-        scroll-snap-align: center;
-        justify-content: flex-start;
-        display: flex;
-    }
-
-    .interesting-item-title {
-        font-size: var(--anime-full-row-title-size);
-        font-weight: var(--anime-full-row-title-weight);
-        color: var(--main-text-color);
-        margin-bottom: 5px;
-        margin-top: 5px;
-    }
-
-    .interesting-item-description {
-        font-size: var(--anime-full-row-description-size);
-        color: var(--third-text-color);
-        line-height: var(--anime-full-row-description-line-height);
-        font-weight: var(--anime-full-row-description-weight);
-    }
-
-    .interesting-item:first-child {
-        margin-left: 20px;
-    }
-
-    .interesting-item:last-child {
-        margin-right: 20px;
     }
 </style>

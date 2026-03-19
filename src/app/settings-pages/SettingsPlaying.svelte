@@ -4,13 +4,14 @@
     import DropdownElement from "../components/settings/DropdownElement.svelte";
     import { localStorageWritable } from "@babichjacob/svelte-localstorage";
     import utils from "../utils";
+    import { normalizePlayingSettings } from "../playerPreferences.js";
 
     let playingSettings;
 
     const playingSettingsRaw = localStorageWritable("playingSettings", utils.playingDefaultSettings);
 
     playingSettingsRaw.subscribe((value) => {
-        playingSettings = value
+        playingSettings = normalizePlayingSettings(value);
     })
 
     function updateKey(key, value) {
@@ -21,7 +22,7 @@
 </script>
 
 <div class="flex-column playing-settings">
-    <CheckboxElement title="Запоминать вариант и источник (В разработке)" description="Автоматический переход к варианту и источнику из которого вы последний раз смотрели серию" value={false} disabled={true} onChangeCallback={(e) => {}} />
+    <CheckboxElement title="Запоминать вариант, источник и качество" description="При повторном запуске релиза AniDesk восстановит последние использованные настройки воспроизведения." value={playingSettings.rememberReleasePreferences} onChangeCallback={(v) => updateKey('rememberReleasePreferences', v)} />
     <CheckboxElement title="Не сохранять историю просмотра" description="Серия не будут отображаться в вашей истории." value={playingSettings.disableHistory} onChangeCallback={(v) => updateKey('disableHistory', v)} />
 
     <Separator width="75%" />

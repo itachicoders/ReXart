@@ -42,7 +42,9 @@ module.exports = {
     playingDefaultSettings: {
         defaultQuality: 1080,
         defaultSource: null,
-        disableHistory: false
+        disableHistory: false,
+        rememberReleasePreferences: true,
+        releasePreferences: {}
     },
 
     upscaleDefaultSettings: {

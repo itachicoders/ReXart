@@ -8,8 +8,10 @@
     import { localStorageWritable } from "@babichjacob/svelte-localstorage";
     import BaseModal from "./components/modal/BaseModal.svelte";
     import FirstRunModal from "./components/modal/FirstRunModal.svelte";
+    import ChangelogModal from "./components/modal/ChangelogModal.svelte";
     import { notificationCount } from "./components/stores/notificationCount";
     import { fade } from "svelte/transition";
+    import { onMount } from "svelte";
 
     window.utils = Utils;
 
@@ -43,9 +45,19 @@
     user_token.subscribe((value) => (utoken = JSON.parse(value)));
 
     let firstRun;
+    let changelogPreferences;
+    let versionsInfo = null;
+    let showChangelogModal = false;
+    let changelogHandledVersion = null;
 
     const firstRunRaw = localStorageWritable("first_run", true);
     firstRunRaw.subscribe((value) => (firstRun = value));
+
+    const changelogPreferencesRaw = localStorageWritable("changelogPreferences", {
+        showOnUpdate: true,
+        lastSeenVersion: null,
+    });
+    changelogPreferencesRaw.subscribe((value) => (changelogPreferences = value));
 
     discordRPC.setActivity({
         type: 3,
@@ -84,7 +96,11 @@
     window.baseSettings = settings.getAll().then((res) => (baseSettings = res));
     window.versions = prc
         .getVersions()
-        .then((versions) => (window.versions = versions));
+        .then((versions) => {
+            versionsInfo = versions;
+            window.versions = versions;
+            return versions;
+        });
     window.anixApi = new Anixart({
         token: utoken?.token,
         baseUrl: `https://${endpointUrl}`,
@@ -144,6 +160,34 @@
             .countNotifications()
             .then((x) => notificationCount.set(x.count));
     }, 1800000); //Раз в 30 минут обновляем кол-во уведомлений
+
+    $: if (
+        versionsInfo?.anidesk &&
+        changelogPreferences &&
+        changelogHandledVersion !== versionsInfo.anidesk
+    ) {
+        changelogHandledVersion = versionsInfo.anidesk;
+
+        if (changelogPreferences.lastSeenVersion !== versionsInfo.anidesk) {
+            changelogPreferencesRaw.set({
+                ...changelogPreferences,
+                lastSeenVersion: versionsInfo.anidesk,
+            });
+
+            if (!firstRun && changelogPreferences.showOnUpdate) {
+                showChangelogModal = true;
+            }
+        }
+    }
+
+    onMount(() => {
+        const handler = () => {
+            showChangelogModal = true;
+        };
+
+        window.addEventListener("open-changelog-modal", handler);
+        return () => window.removeEventListener("open-changelog-modal", handler);
+    });
 </script>
 
 <main>
@@ -179,6 +223,13 @@
                         on:closeModal={() => (firstRun = false)}
                     />
                 {/if}
+                <BaseModal
+                    modalComponent={ChangelogModal}
+                    showed={showChangelogModal}
+                    modalSize={{ width: "760px", height: "640px" }}
+                    modalArgs={{ version: versionsInfo?.anidesk }}
+                    on:closeModal={() => (showChangelogModal = false)}
+                />
             </div>
         {/key}
     </div>
