@@ -5,7 +5,7 @@ const package = require('./package.json');
 module.exports = {
   packagerConfig: {
     asar: true,
-    appBundleId: "com.ds1nc.rexart",
+    appBundleId: "com.anime.rexart",
     name: "ReXart",
     appCopyright: "itachicoders",
     icon: "icon/icon",
