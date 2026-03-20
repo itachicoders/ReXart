@@ -5,9 +5,9 @@ const package = require('./package.json');
 module.exports = {
   packagerConfig: {
     asar: true,
-    appBundleId: "com.ds1nc.anidesk",
-    name: "AniDesk",
-    appCopyright: "DesConnet, hack1exe",
+    appBundleId: "com.ds1nc.rexart",
+    name: "ReXart",
+    appCopyright: "itachicoders",
     icon: "icon/icon",
   },
   rebuildConfig: {},
@@ -15,8 +15,8 @@ module.exports = {
     {
       name: '@electron-forge/maker-squirrel',
       config: {
-        name: 'AniDesk',
-        iconUrl: "https://anidesk.ds1nc.ru/anidesk-icon.ico",
+        name: 'ReXart',
+        iconUrl: "https://raw.githubusercontent.com/itachicoders/ReXart/refs/heads/main/icon/icon.ico",
         setupExe: `${package.name}-${package.version}-win32.exe`,
         setupIcon: 'icon/icon.ico',
         loadingGif: 'icon/install-anim.gif'
@@ -30,11 +30,11 @@ module.exports = {
       name: '@electron-forge/maker-deb',
       config: {
         options: {
-          name: "anidesk",
-          productName: "AniDesk",
+          name: "rexart",
+          productName: "ReXart",
           icon: "icon/icon.ico",
-          maintainer: 'DesConnet, hack1exe',
-          homepage: "https://anidesk.ds1nc.ru",
+          maintainer: 'itachicoders',
+          homepage: "https://github.com/itachicoders/ReXart",
         }
       },
     },

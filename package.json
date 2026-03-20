@@ -1,6 +1,6 @@
 {
-  "name": "anidesk",
-  "version": "0.0.1-beta.6",
+  "name": "rexart",
+  "version": "0.0.1-beta.7",
   "description": "Unofficial desktop client of Anixart",
   "main": "./src/main.js",
   "scripts": {
@@ -18,7 +18,7 @@
   "keywords": [
     "anixart"
   ],
-  "author": "DesConnet, hack1exe",
+  "author": "itachicoders",
   "license": "ISC",
   "devDependencies": {
     "@babichjacob/svelte-localstorage": "^1.1.2",

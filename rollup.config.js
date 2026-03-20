@@ -37,7 +37,7 @@ export default {
         sourcemap: true,
         stringArray: false,
         format: 'iife',
-        name: 'anideskMain',
+        name: 'rexartMain',
         file: 'public/build/bundle.js'
     },
     plugins: [
