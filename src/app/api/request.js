@@ -230,25 +230,60 @@ export async function uploadImage(path, image, {
     ]);
 
     let lastError = null;
+    const failedAttempts = [];
 
-    for (const variant of uploadVariants) {
+    for (let index = 0; index < uploadVariants.length; index++) {
+        const variant = uploadVariants[index];
+        const variantFieldName = variant.fieldName ?? fieldName;
+        const variantIncludeNameField = Boolean(variant.includeNameField);
+
         try {
-            return await request(path, {
+            const response = await request(path, {
                 method: variant.method ?? method,
                 query,
                 body: createUploadFormData(
                     blob,
                     finalFilename,
-                    variant.fieldName ?? fieldName,
-                    Boolean(variant.includeNameField),
+                    variantFieldName,
+                    variantIncludeNameField,
                     variant.extraFields ?? extraFields,
                 ),
                 apiVersion,
                 headers,
             });
+
+            console.info("[uploadImage] upload succeeded", {
+                path,
+                fieldName: variantFieldName,
+                includeNameField: variantIncludeNameField,
+                method: variant.method ?? method,
+            });
+
+            return response;
         } catch (error) {
+            const failedAttempt = {
+                path,
+                fieldName: variantFieldName,
+                includeNameField: variantIncludeNameField,
+                method: variant.method ?? method,
+                status: error?.status ?? null,
+                message: error?.data?.message || error?.message || "Upload failed",
+            };
+
+            failedAttempts.push(failedAttempt);
             lastError = error;
+
+            if (index < uploadVariants.length - 1) {
+                console.info("[uploadImage] upload variant rejected, trying fallback", failedAttempt);
+            }
         }
+    }
+
+    if (failedAttempts.length) {
+        console.warn("[uploadImage] all upload variants failed", {
+            path,
+            attempts: failedAttempts,
+        });
     }
 
     if (lastError) {

@@ -45,13 +45,13 @@
         }}>Выйти</button>
         <Separator marginRight={22}/>
         <div class="build-info flex-column">
-            <span class="third-text">AniDesk v{window.versions.anidesk}</span>
+            <span class="third-text">ReXart v{window.versions.rexart}</span>
             <span class="third-text">NodeJS v{window.versions.node}</span>
             <span class="third-text">Electron v{window.versions.electron}</span>
             <span class="third-text">Chrome v{window.versions.chrome}</span>
         </div>
         <div class="links-info flex-row">
-            <button onclick={() => winApi.openLink(`https://github.com/theDesConnet/AniDesk`)}>
+            <button onclick={() => winApi.openLink(`https://github.com/itachicoders/ReXart`)}>
             <Icon src={githubLogo} varColor="--third-text-color" size={{width: 30, height: 30}}/>
             </button>
         </div>

@@ -40,6 +40,9 @@
     let avatarCropSource = null;
     let avatarInput;
     let avatarStatus = null;
+    let isAvatarUploading = false;
+    let avatarPreviewLoaded = false;
+    let isAvatarPreviewLoading = false;
 
     function withCacheBust(url) {
         if (!url || typeof url !== "string" || url.startsWith("data:")) {
@@ -49,14 +52,30 @@
         return `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}`;
     }
 
-    async function ensureAvatarPreview() {
-        if (!avatarPreview && utoken) {
+    async function ensureAvatarPreview(force = false) {
+        if (!utoken?.id || (avatarPreviewLoaded && !force) || isAvatarPreviewLoading) {
+            return;
+        }
+
+        isAvatarPreviewLoading = true;
+
+        try {
             const info = await anixApi.profile.info(utoken.id);
             avatarPreview = info?.profile?.avatar ?? null;
+            avatarPreviewLoaded = true;
+        } catch (error) {
+            console.error("Не удалось загрузить текущий аватар:", error);
+            avatarStatus = {
+                type: "error",
+                message: error?.data?.message || error?.message || "Не удалось загрузить текущий аватар.",
+            };
+            avatarPreviewLoaded = true;
+        } finally {
+            isAvatarPreviewLoading = false;
         }
     }
 
-    $: if (utoken && !avatarPreview) {
+    $: if (utoken && !avatarPreviewLoaded && !isAvatarPreviewLoading) {
         ensureAvatarPreview();
     }
 
@@ -88,14 +107,19 @@
         const blob = payload?.blob ?? payload;
         const preview = payload?.dataUrl ?? (typeof payload === "string" ? payload : null);
 
-        avatarStatus = null;
+        avatarStatus = {
+            type: "loading",
+            message: "Загружаем аватар...",
+        };
+        isAvatarUploading = true;
 
         try {
             await uploadProfileAvatar(blob);
-            const info = await anixApi.profile.info(utoken.id);
-            const freshAvatar = withCacheBust(info?.profile?.avatar ?? preview);
+            await ensureAvatarPreview(true);
+            const freshAvatar = withCacheBust(avatarPreview ?? preview);
 
             avatarPreview = freshAvatar;
+            avatarPreviewLoaded = true;
             avatarCropSource = null;
             showAvatarCropModal = false;
             avatarStatus = {
@@ -120,6 +144,8 @@
                 message: error?.data?.message || error?.message || "Не удалось обновить аватар.",
             };
             throw error;
+        } finally {
+            isAvatarUploading = false;
         }
     }
 </script>
@@ -138,7 +164,7 @@
                 {#if avatarPreview}
                     <img class="avatar-preview" src={avatarPreview} alt="avatar-preview" />
                 {/if}
-                <BaseMainButton style="primary" width="180px" borderRadius={6} onClickCallback={openAvatarPicker}>
+                <BaseMainButton style="primary" width="180px" borderRadius={6} isLoading={isAvatarUploading} disabled={isAvatarUploading} onClickCallback={openAvatarPicker}>
                     Изменить аватар
                 </BaseMainButton>
                 <BaseMainButton style="transparent" width="220px" borderRadius={6} currentColorVar="--secondary-text-color" onClickCallback={() => (showBlockedUsersModal = true)}>
@@ -147,7 +173,7 @@
                 <input bind:this={avatarInput} type="file" accept="image/*" hidden on:change={onAvatarSelected} />
             </div>
             {#if avatarStatus}
-                <div class="avatar-status" class:avatar-status-error={avatarStatus.type === "error"}>
+                <div class="avatar-status" class:avatar-status-error={avatarStatus.type === "error"} class:avatar-status-loading={avatarStatus.type === "loading"}>
                     {avatarStatus.message}
                 </div>
             {/if}
@@ -288,5 +314,10 @@
     .avatar-status-error {
         background-color: rgba(226, 75, 75, 0.12);
         color: #ff9696;
+    }
+
+    .avatar-status-loading {
+        background-color: rgba(76, 132, 255, 0.12);
+        color: #a9c4ff;
     }
 </style>

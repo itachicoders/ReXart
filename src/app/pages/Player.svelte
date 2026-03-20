@@ -1,4 +1,4 @@
-<!--Anidesk player-->
+<!--ReXart player-->
 
 <script>
     export let args;
@@ -302,8 +302,8 @@
             type: 3,
             state: `${episode.name}`,
             details: args.release.title_ru.slice(0, 127),
-            largeImageKey: "anidesk-transparent",
-            largeImageText: "AniDesk - Anixart Client",
+            largeImageKey: "rexart-transparent",
+            largeImageText: "ReXart - Anixart Client",
             startTimestamp: startTimestamp - video.currentTime * 1000,
             endTimestamp:
                 startTimestamp + (video.duration - video.currentTime) * 1000,
@@ -313,7 +313,7 @@
                     label: "Ссылка на релиз",
                     url: `https://anixart.app/release/${args.release.id}`,
                 },
-                { label: "Ссылка на клиент", url: "https://anidesk.ds1nc.ru/" },
+                { label: "Ссылка на клиент", url: "https://github.com/itachicoders/ReXart" },
             ],
         });
     }
@@ -397,7 +397,7 @@
     }
 
     async function init() {
-        mainDiv = await waitForElm(".anidesk-player");
+        mainDiv = await waitForElm(".rexart-player");
         video = await waitForElm(".player-video");
 
         if (Hls.isSupported() && !new URL(args.src).pathname.endsWith(".mp4")) {
@@ -570,8 +570,8 @@
                 type: 3,
                 state: `${currentEpisode.name}`,
                 details: args.release.title_ru.slice(0, 127),
-                largeImageKey: "anidesk-transparent",
-                largeImageText: "AniDesk - Anixart Client",
+                largeImageKey: "rexart-transparent",
+                largeImageText: "ReXart - Anixart Client",
                 instance: true,
                 buttons: [
                     {
@@ -580,7 +580,7 @@
                     },
                     {
                         label: "Ссылка на клиент",
-                        url: "https://anidesk.ds1nc.ru/",
+                        url: "https://github.com/itachicoders/ReXart",
                     },
                 ],
             });
@@ -596,8 +596,8 @@
                 type: 3,
                 state: `${currentEpisode.name}`,
                 details: args.release.title_ru.slice(0, 127),
-                largeImageKey: "anidesk-transparent",
-                largeImageText: "AniDesk - Anixart Client",
+                largeImageKey: "rexart-transparent",
+                largeImageText: "ReXart - Anixart Client",
                 startTimestamp: startTimestamp - video.currentTime * 1000,
                 endTimestamp:
                     startTimestamp +
@@ -610,7 +610,7 @@
                     },
                     {
                         label: "Ссылка на клиент",
-                        url: "https://anidesk.ds1nc.ru/",
+                        url: "https://github.com/itachicoders/ReXart",
                     },
                 ],
             });
@@ -652,8 +652,8 @@
             type: 3,
             state: `${currentEpisode.name}`,
             details: args.release.title_ru.slice(0, 127),
-            largeImageKey: "anidesk-transparent",
-            largeImageText: "AniDesk - Anixart Client",
+            largeImageKey: "rexart-transparent",
+            largeImageText: "ReXart - Anixart Client",
             startTimestamp: startTimestamp - video.currentTime * 1000,
             endTimestamp:
                 startTimestamp + (video.duration - video.currentTime) * 1000,
@@ -663,7 +663,7 @@
                     label: "Ссылка на релиз",
                     url: `https://anixart.tv/release/${args.release.id}`,
                 },
-                { label: "Ссылка на клиент", url: "https://anidesk.ds1nc.ru/" },
+                { label: "Ссылка на клиент", url: "https://github.com/itachicoders/ReXart" },
             ],
         });
     }
@@ -693,7 +693,7 @@
     });
 </script>
 
-<div class="anidesk-player full">
+<div class="rexart-player full">
     <PlayerGui
         {playVideo}
         {args}
@@ -796,7 +796,7 @@
         width: 100%;
     }
 
-    .anidesk-player {
+    .rexart-player {
         background-color: black;
     }
 </style>

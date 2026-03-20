@@ -6,12 +6,12 @@
 <div class="about-program flex-column">
     <div class="about-program-title flex-row">
         <img
-            src="./assets/icons/anidesk-transparent.png"
+            src="./assets/icons/rexart-transparent.png"
             width="200px"
             alt="icon"
         />
         <div class="app-info flex-column">
-            <span class="app-title">AniDesk</span>
+            <span class="app-title">ReXart</span>
             <p class="app-description">
                 Неофициальный десктоп-клиент для приложения <strong
                     >Anixart</strong
@@ -28,46 +28,20 @@
         <div class="developers flex-column">
             <div class="developer flex-row">
                 <img
-                    src="https://github.com/theDesConnet.png"
-                    width="100px"
-                    alt="icon"
-                />
-                <div class="dev-info">
-                    <span class="developer-name">DesConnet</span>
-                    <span class="developer-role">Главный разработчик</span>
-                    <div class="social-links">
-                        <button
-                            onclick={() => {
-                                winApi.openLink(
-                                    `https://github.com/theDesConnet`,
-                                );
-                            }}
-                        >
-                            <Icon
-                                src={githubLogo}
-                                varColor="--main-text-color"
-                                size={{ width: 35, height: 35 }}
-                            />
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="developer flex-row">
-                <img
-                    src="https://github.com/hack1exe.png"
+                    src="https://github.com/itachicoders.png"
                     width="100px"
                     alt="icon"
                 />
                 <div class="dev-info">
                     <span class="developer-name"
-                        >Michail Electronshik (aka Hack1exe)</span
+                        >itachichrist</span
                     >
                     <span class="developer-role">Разработчик</span>
                     <div class="social-links">
                         <button
                             onclick={() => {
                                 winApi.openLink(
-                                    `https://github.com/hack1exe`,
+                                    `https://github.com/itachicoders`,
                                 );
                             }}
                         >

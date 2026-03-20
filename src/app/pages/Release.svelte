@@ -33,15 +33,15 @@
             type: 3,
             state: "На странице релиза",
             details: data.release.title_ru.slice(0, 127),
-            largeImageKey: "anidesk-transparent",
-            largeImageText: "AniDesk - Anixart Client",
+            largeImageKey: "rexart-transparent",
+            largeImageText: "ReXart - Anixart Client",
             instance: true,
             buttons: [
                 {
                     label: "Ссылка на релиз",
                     url: `https://anixart.app/release/${data.release.id}`,
                 },
-                { label: "Ссылка на клиент", url: "https://anidesk.ds1nc.ru/" },
+                { label: "Ссылка на клиент", url: "https://github.com/itachicoders/ReXart" },
             ],
         });
     });

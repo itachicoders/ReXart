@@ -22,7 +22,7 @@
 </script>
 
 <div class="flex-column playing-settings">
-    <CheckboxElement title="Запоминать вариант, источник и качество" description="При повторном запуске релиза AniDesk восстановит последние использованные настройки воспроизведения." value={playingSettings.rememberReleasePreferences} onChangeCallback={(v) => updateKey('rememberReleasePreferences', v)} />
+    <CheckboxElement title="Запоминать вариант, источник и качество" description="При повторном запуске релиза ReXart восстановит последние использованные настройки воспроизведения." value={playingSettings.rememberReleasePreferences} onChangeCallback={(v) => updateKey('rememberReleasePreferences', v)} />
     <CheckboxElement title="Не сохранять историю просмотра" description="Серия не будут отображаться в вашей истории." value={playingSettings.disableHistory} onChangeCallback={(v) => updateKey('disableHistory', v)} />
 
     <Separator width="75%" />

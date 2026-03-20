@@ -55,3 +55,34 @@ export async function uploadProfileAvatar(image) {
         ],
     });
 }
+
+
+export async function uploadProfileCover(channelId, image) {
+    const token = getCurrentToken();
+
+    if (!token) {
+        throw new Error("Authentication required");
+    }
+
+    if (!channelId) {
+        throw new Error("Не удалось определить канал профиля для загрузки обложки.");
+    }
+
+    return uploadImage(`/channel/cover/upload/${channelId}`, image, {
+        query: {
+            token,
+        },
+        headers: buildAuthHeaders(token),
+        filename: image?.name || image?.filename || "profile-cover.jpg",
+        fieldName: "file",
+        includeNameField: false,
+        variants: [
+            { fieldName: "file", includeNameField: false },
+            { fieldName: "file", includeNameField: true },
+            { fieldName: "image", includeNameField: false },
+            { fieldName: "image", includeNameField: true },
+            { fieldName: "cover", includeNameField: false },
+            { fieldName: "cover", includeNameField: true },
+        ],
+    });
+}

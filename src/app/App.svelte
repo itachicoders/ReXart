@@ -9,6 +9,7 @@
     import BaseModal from "./components/modal/BaseModal.svelte";
     import FirstRunModal from "./components/modal/FirstRunModal.svelte";
     import ChangelogModal from "./components/modal/ChangelogModal.svelte";
+    import { getLatestChangelog } from "./changelog.js";
     import { notificationCount } from "./components/stores/notificationCount";
     import { fade } from "svelte/transition";
     import { onMount } from "svelte";
@@ -50,6 +51,8 @@
     let showChangelogModal = false;
     let changelogHandledVersion = null;
 
+    const latestChangelog = getLatestChangelog();
+
     const firstRunRaw = localStorageWritable("first_run", true);
     firstRunRaw.subscribe((value) => (firstRun = value));
 
@@ -62,11 +65,11 @@
     discordRPC.setActivity({
         type: 3,
         state: "Ожидание...",
-        largeImageKey: "anidesk-transparent",
-        largeImageText: "AniDesk - Anixart Client",
+        largeImageKey: "rexart-transparent",
+        largeImageText: "ReXart - Anixart Client",
         instance: true,
         buttons: [
-            { label: "Ссылка на клиент", url: "https://anidesk.ds1nc.ru/" },
+            { label: "Ссылка на клиент", url: "https://github.com/itachicoders/ReXart" },
         ],
     });
 
@@ -162,21 +165,29 @@
     }, 1800000); //Раз в 30 минут обновляем кол-во уведомлений
 
     $: if (
-        versionsInfo?.anidesk &&
+        latestChangelog &&
         changelogPreferences &&
-        changelogHandledVersion !== versionsInfo.anidesk
+        changelogHandledVersion !== latestChangelog.version
     ) {
-        changelogHandledVersion = versionsInfo.anidesk;
+        changelogHandledVersion = latestChangelog.version;
 
-        if (changelogPreferences.lastSeenVersion !== versionsInfo.anidesk) {
+        if (
+            !firstRun &&
+            changelogPreferences.showOnUpdate &&
+            changelogPreferences.lastSeenVersion !== latestChangelog.version
+        ) {
+            showChangelogModal = true;
+        }
+    }
+
+    function closeChangelogModal(markAsSeen = true) {
+        showChangelogModal = false;
+
+        if (markAsSeen && latestChangelog && changelogPreferences) {
             changelogPreferencesRaw.set({
                 ...changelogPreferences,
-                lastSeenVersion: versionsInfo.anidesk,
+                lastSeenVersion: latestChangelog.version,
             });
-
-            if (!firstRun && changelogPreferences.showOnUpdate) {
-                showChangelogModal = true;
-            }
         }
     }
 
@@ -227,8 +238,8 @@
                     modalComponent={ChangelogModal}
                     showed={showChangelogModal}
                     modalSize={{ width: "760px", height: "640px" }}
-                    modalArgs={{ version: versionsInfo?.anidesk }}
-                    on:closeModal={() => (showChangelogModal = false)}
+                    modalArgs={{ data: latestChangelog }}
+                    on:closeModal={() => closeChangelogModal(true)}
                 />
             </div>
         {/key}
