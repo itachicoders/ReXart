@@ -3,7 +3,7 @@
 
 <div align="center">
 
-![ReXart-transparent](https://github.com/user-attachments/assets/497e25a6-751c-4f98-bd60-faec3ab1e69d)
+![ReXart-transparent](https://github.com/itachicoders/ReXart/blob/main/public/assets/icons/rexart-transparent.png?raw=true)
 
 # ReXart
 **ReXart** — это неофициальный десктоп клиент мобильного приложения **Anixart** с открытым исходным кодом, предоставляющий удобный способ просматривать аниме и получать информацию о релизах.
