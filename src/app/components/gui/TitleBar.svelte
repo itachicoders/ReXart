@@ -37,10 +37,10 @@
             />
         </svg>
     </div>
-    <div class="title-bar-text unselectable">AniDesk <sup>β</sup></div>
+    <div class="title-bar-text unselectable">ReXart</div>
     <button
         class="title-bar-minimize button-title-bar"
-        onclick={titleBarAPI.minimize()}
+        onclick={() => titleBarAPI?.minimize?.()}
         ><svg
             aria-hidden="true"
             role="img"
@@ -53,7 +53,7 @@
     >
     <button
         class="title-bar-maximize button-title-bar"
-        onclick={titleBarAPI.maximize()}
+        onclick={() => titleBarAPI?.maximize?.()}
         ><svg
             aria-hidden="true"
             role="img"
@@ -72,7 +72,7 @@
     >
     <button
         class="title-bar-close button-title-bar"
-        onclick={titleBarAPI.close()}
+        onclick={() => titleBarAPI?.close?.()}
         ><svg
             aria-hidden="true"
             role="img"

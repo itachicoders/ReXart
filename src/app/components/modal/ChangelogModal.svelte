@@ -1,41 +1,84 @@
 <script>
-    import { CHANGELOG_DATA } from "../../changelog.js";
     import BaseMainButton from "../buttons/BaseMainButton.svelte";
     import { createEventDispatcher } from "svelte";
 
     export let args = {};
 
     const dispatch = createEventDispatcher();
+
+    const changelog = args?.data ?? null;
+
+    function closeModal() {
+        dispatch("closeModal");
+    }
 </script>
 
-<div class="modal-title">{args?.title ?? CHANGELOG_DATA.title}</div>
-<div class="modal-content changelog-content">
-    <div class="changelog-version">Версия: {args?.version ?? CHANGELOG_DATA.version}</div>
+{#if changelog}
+    <div class="modal-title">{changelog.title}</div>
 
-    {#each CHANGELOG_DATA.sections as section}
-        <div class="changelog-section flex-column">
-            <div class="changelog-section-title">{section.title}</div>
-            <ul class="changelog-list">
-                {#each section.items as item}
-                    <li>{item}</li>
-                {/each}
-            </ul>
+    <div class="modal-content changelog-content">
+        <div class="changelog-meta">
+            <div class="changelog-version">Версия: {changelog.version}</div>
+            {#if changelog.date}
+                <div class="changelog-date">{changelog.date}</div>
+            {/if}
         </div>
-    {/each}
 
-    <div class="changelog-actions flex-row">
-        <BaseMainButton style="primary" borderRadius={10} onClickCallback={() => dispatch("closeModal")}>
-            Закрыть
-        </BaseMainButton>
+        {#each changelog.sections as section}
+            <div class="changelog-section flex-column">
+                <div class="changelog-section-title">{section.title}</div>
+
+                <ul class="changelog-list">
+                    {#each section.items as item}
+                        <li>{item}</li>
+                    {/each}
+                </ul>
+            </div>
+        {/each}
+
+        <div class="changelog-actions flex-row">
+            <BaseMainButton
+                style="primary"
+                borderRadius={10}
+                onClickCallback={closeModal}
+            >
+                Понятно
+            </BaseMainButton>
+        </div>
     </div>
-</div>
+{:else}
+    <div class="modal-title">Журнал изменений</div>
+
+    <div class="modal-content changelog-content">
+        <div class="changelog-empty">
+            Нет данных для отображения.
+        </div>
+
+        <div class="changelog-actions flex-row">
+            <BaseMainButton
+                style="primary"
+                borderRadius={10}
+                onClickCallback={closeModal}
+            >
+                Закрыть
+            </BaseMainButton>
+        </div>
+    </div>
+{/if}
 
 <style>
     .changelog-content {
         gap: 18px;
     }
 
-    .changelog-version {
+    .changelog-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .changelog-version,
+    .changelog-date {
         color: var(--secondary-text-color);
         font-size: 14px;
     }
@@ -65,5 +108,10 @@
     .changelog-actions {
         justify-content: flex-end;
         margin-top: auto;
+    }
+
+    .changelog-empty {
+        color: var(--secondary-text-color);
+        font-size: 14px;
     }
 </style>

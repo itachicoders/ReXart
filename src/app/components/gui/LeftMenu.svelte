@@ -112,11 +112,11 @@
             discordRPC.setActivity({
                 type: 3,
                 state: "Ожидание...",
-                largeImageKey: "anidesk-transparent",
-                largeImageText: "AniDesk - Anixart Client",
+                largeImageKey: "rexart-transparent",
+                largeImageText: "ReXart - Anixart Client",
                 instance: true,
                 buttons: [
-                    { label: "Ссылка на клиент", url: "https://anidesk.ds1nc.ru/" },
+                    { label: "Ссылка на клиент", url: "https://github.com/itachicoders/ReXart" },
                 ],
             });
         }
